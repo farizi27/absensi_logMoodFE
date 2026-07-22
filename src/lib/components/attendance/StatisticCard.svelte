@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import Card from "$lib/components/ui/Card.svelte";
 
 	interface Props {
 		title: string;
@@ -26,54 +27,34 @@
 	}: Props = $props();
 </script>
 
-<div class={["statistic-card", variant]}>
+<Card padding="lg" hover border>
+	<div class={["statistic-inner", variant]}>
 
-	<div class="header">
+		<div class="header">
+			<div class="icon">
+				{#if icon}
+					{@render icon()}
+				{/if}
+			</div>
+		</div>
 
-		<div class="icon">
-			{#if icon}
-				{@render icon()}
+		<div class="content">
+			<h2>{value}</h2>
+			<h4>{title}</h4>
+			{#if description}
+				<p>{description}</p>
 			{/if}
 		</div>
 
 	</div>
-
-	<div class="content">
-
-		<h2>{value}</h2>
-
-		<h4>{title}</h4>
-
-		{#if description}
-			<p>{description}</p>
-		{/if}
-
-	</div>
-
-</div>
+</Card>
 
 <style>
-	.statistic-card {
+	.statistic-inner {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-
-		padding: 1.5rem;
-
-		background: var(--color-surface);
-
-		border: 1px solid var(--color-border);
-
-		border-radius: var(--radius-lg);
-
-		box-shadow: var(--shadow-sm);
-
-		transition: .25s;
-	}
-
-	.statistic-card:hover {
-		transform: translateY(-4px);
-		box-shadow: var(--shadow-md);
+		height: 100%;
 	}
 
 	.header {

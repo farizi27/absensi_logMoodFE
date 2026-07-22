@@ -1,101 +1,74 @@
 <script lang="ts">
-    import  User  from '@lucide/svelte/icons/user';
-	interface Props {
-		src?: string;
-		alt?: string;
-		name?: string;
-		size?: "sm" | "md" | "lg" | "xl";
-		rounded?: boolean;
-	}
-
 	let {
-		src = "",
-		alt = "",
 		name = "",
-		size = "md",
-		rounded = true
-	}: Props = $props();
+		src = "",
+		size = 40,
+		background = "var(--color-primary)",
+		color = "var(--color-text-white)"
+	}: {
+		name?: string;
+		src?: string;
+		size?: number | string;
+		background?: string;
+		color?: string;
+	} = $props();
 
+	const numericSize = $derived.by(() => {
+		if (typeof size === "number") return size;
+		if (size === "sm") return 32;
+		if (size === "md") return 40;
+		if (size === "lg") return 48;
+		if (size === "xl") return 64;
+		const parsed = parseInt(size, 10);
+		return isNaN(parsed) ? 40 : parsed;
+	});
+
+	const initials = $derived.by(() => {
+		if (!name) return "?";
+
+		return name
+			.trim()
+			.split(/\s+/)
+			.slice(0, 2)
+			.map((word) => word[0].toUpperCase())
+			.join("");
+	});
 </script>
 
 <div
-	class={[
-		"avatar",
-		size,
-		rounded && "rounded"
-	]}
+	class="avatar"
+	style="
+		width: {numericSize}px;
+		height: {numericSize}px;
+		background: {background};
+		color: {color};
+		font-size: {numericSize * 0.4}px;
+	"
+	title={name}
 >
 	{#if src}
-		<img src={src} alt={alt || name} />
+		<img {src} alt={name} class="avatar-img" />
 	{:else}
-        <div class="user-icon">
-            <User />
-        </div>
+		{initials}
 	{/if}
 </div>
 
 <style>
 	.avatar {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
 		justify-content: center;
-
-		background: var(--color-primary-light);
-		color: var(--color-primary);
-
-		font-weight: 600;
-
-		overflow: hidden;
-
-		user-select: none;
-
-		border: 1px solid var(--color-border);
-	}
-
-	.rounded {
 		border-radius: 50%;
+		font-weight: 600;
+		user-select: none;
+		flex-shrink: 0;
+		overflow: hidden;
+		box-shadow: var(--shadow-sm);
 	}
 
-	img {
+	.avatar-img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-	}
-
-	.user-icon{
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-
-        background: var(--color-surface-hover);
-        color: var(--color-text-light);
-    }
-
-	.sm {
-		width: 32px;
-		height: 32px;
-		font-size: .8rem;
-	}
-
-	.md {
-		width: 40px;
-		height: 40px;
-		font-size: .95rem;
-	}
-
-	.lg {
-		width: 56px;
-		height: 56px;
-		font-size: 1.2rem;
-	}
-
-	.xl {
-		width: 72px;
-		height: 72px;
-		font-size: 1.5rem;
 	}
 </style>

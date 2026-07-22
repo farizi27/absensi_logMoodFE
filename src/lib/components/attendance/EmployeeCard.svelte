@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import Card from "$lib/components/ui/Card.svelte";
 	import Avatar from "$lib/components/ui/Avatar.svelte";
 	import Badge from "$lib/components/ui/Badge.svelte";
-	import Button from "$lib/components/ui/Button.svelte";
 
 	interface Props {
 		name: string;
@@ -23,66 +23,47 @@
 	}: Props = $props();
 </script>
 
-<div class="employee-card">
+<Card hover border padding="md">
+	<div class="employee-card-inner">
+		<Avatar
+			src={photo}
+			name={name}
+			size="xl"
+		/>
 
-	<Avatar
-		src={photo}
-		name={name}
-		size="xl"
-	/>
+		<div class="content">
+			<h3>{name}</h3>
 
-	<div class="content">
+			{#if email}
+				<p>{email}</p>
+			{/if}
 
-		<h3>{name}</h3>
+			{#if position}
+				<span>{position}</span>
+			{/if}
 
-		{#if email}
-			<p>{email}</p>
-		{/if}
-
-		{#if position}
-			<span>{position}</span>
-		{/if}
-
-		<div class="status">
-			<Badge
-				variant={status === "Aktif" ? "success" : "danger"}
-			>
-				{status}
-			</Badge>
-		</div>
-
-		{#if children}
-			<div class="actions">
-				{@render children()}
+			<div class="status">
+				<Badge
+					variant={status === "Aktif" ? "success" : "danger"}
+				>
+					{status}
+				</Badge>
 			</div>
-		{/if}
 
+			{#if children}
+				<div class="actions">
+					{@render children()}
+				</div>
+			{/if}
+		</div>
 	</div>
-
-</div>
+</Card>
 
 <style>
-	.employee-card {
+	.employee-card-inner {
 		display: flex;
 		gap: 1rem;
 		align-items: center;
-
-		padding: 1.25rem;
-
-		background: var(--color-surface);
-
-		border: 1px solid var(--color-border);
-
-		border-radius: var(--radius-lg);
-
-		box-shadow: var(--shadow-sm);
-
-		transition: .25s;
-	}
-
-	.employee-card:hover {
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-md);
 	}
 
 	.content {

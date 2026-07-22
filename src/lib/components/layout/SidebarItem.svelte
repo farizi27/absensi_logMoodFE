@@ -76,6 +76,7 @@
 
 	.sidebar-item:hover:not(:disabled) {
 		background: var(--color-surface-hover);
+		color: var(--color-text);
 	}
 
 	.sidebar-item.active {

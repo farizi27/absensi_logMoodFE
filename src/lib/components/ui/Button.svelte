@@ -7,6 +7,7 @@
 		size = "md",
 		disabled = false,
 		fullWidth = false,
+		class: customClass = "",
 		children,
 		onClick
 	}: {
@@ -21,6 +22,7 @@
 		size?: "sm" | "md" | "lg";
 		disabled?: boolean;
 		fullWidth?: boolean;
+		class?: string;
 		children?: Snippet;
 		onClick?: () => void;
 	} = $props();
@@ -33,7 +35,8 @@
 		"button",
 		variant,
 		size,
-		fullWidth && "full"
+		fullWidth && "full",
+		customClass
 	]}
 	onclick={onClick}
 >
@@ -44,9 +47,12 @@
 	.button {
 		border: none;
 		cursor: pointer;
-		border-radius: 10px;
+		border-radius: var(--radius-md, 12px);
 		font-weight: 600;
 		transition: 0.25s;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.button:hover:not(:disabled) {

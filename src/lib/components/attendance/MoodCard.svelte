@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Card from "$lib/components/ui/Card.svelte";
+
 	interface Props {
 		mood: "senang" | "biasa" | "sedih" | "marah" | "lelah";
 		note?: string;
@@ -42,46 +44,29 @@
 	const current = $derived(moods[mood]);
 </script>
 
-<div class={["mood-card", current.color]}>
-
-	<div class="emoji">
-		{current.emoji}
+<Card padding="lg" hover border>
+	<div class={["mood-inner", current.color]}>
+		<div class="emoji">
+			{current.emoji}
+		</div>
+		<h3>{current.label}</h3>
+		{#if note}
+			<p>{note}</p>
+		{/if}
+		{#if date}
+			<small>{date}</small>
+		{/if}
 	</div>
-
-	<h3>{current.label}</h3>
-
-	{#if note}
-		<p>{note}</p>
-	{/if}
-
-	{#if date}
-		<small>{date}</small>
-	{/if}
-
-</div>
+</Card>
 
 <style>
-	.mood-card {
+	.mood-inner {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		text-align: center;
-
-		padding: 1.5rem;
 		gap: .75rem;
-
-		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-border);
-		background: var(--color-surface);
-
-		box-shadow: var(--shadow-sm);
-
-		transition: .2s;
-	}
-
-	.mood-card:hover {
-		transform: translateY(-3px);
-		box-shadow: var(--shadow-md);
+		height: 100%;
 	}
 
 	.emoji {

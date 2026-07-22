@@ -73,7 +73,7 @@
         padding: 0 .9rem;
 
         border: 1px solid var(--color-border);
-        border-radius: var(--color-radius-md);
+        border-radius: var(--radius-md, 12px);
 
         background: var(--color-surface);
 
@@ -97,6 +97,7 @@
         flex: 1;
 
         border: none;
+		border-radius: var(--radius-md);
         outline: none;
 
         background: transparent;
