@@ -3,44 +3,26 @@
 import { del, get, post, put } from "./api";
 
 import type {
-	Mood,
+	MoodJournal,
+	MoodJournalResponse,
 	MoodRequest,
-	MoodStatistic
 } from "$lib/types/mood";
 
 /* ===========================
    GET
 =========================== */
 
-export function getMoods() {
-	return get<Mood[]>("/moods");
-}
-
-export function getMood(id: string) {
-	return get<Mood>(`/moods/${id}`);
-}
-
-export function getTodayMood() {
-	return get<Mood>("/moods/today");
-}
-
-export function getMoodHistory() {
-	return get<Mood[]>("/moods/history");
-}
-
-export function getMoodStatistic() {
-	return get<MoodStatistic>("/moods/statistic");
+export function getMoodJournals() {
+	return get<MoodJournalResponse>("/moodJournals");
 }
 
 /* ===========================
    CREATE
 =========================== */
 
-export function createMood(
-	data: MoodRequest
-) {
-	return post<Mood>(
-		"/moods",
+export function createMoodJournal(data: MoodRequest) {
+	return post<{ success: boolean; message: string }>(
+		"/moodJournals",
 		data
 	);
 }
@@ -49,12 +31,12 @@ export function createMood(
    UPDATE
 =========================== */
 
-export function updateMood(
-	id: string,
+export function updateMoodJournal(
+	id: number,
 	data: MoodRequest
 ) {
-	return put<Mood>(
-		`/moods/${id}`,
+	return put<{ success: boolean; message: string }>(
+		`/moodJournals/${id}`,
 		data
 	);
 }
@@ -63,8 +45,8 @@ export function updateMood(
    DELETE
 =========================== */
 
-export function deleteMood(id: string) {
-	return del<void>(
-		`/moods/${id}`
+export function deleteMoodJournal(id: number) {
+	return del<{ success: boolean; message: string }>(
+		`/moodJournals/${id}`
 	);
 }

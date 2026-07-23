@@ -3,44 +3,34 @@
 import { del, get, post, put } from "./api";
 
 import type {
-	Attendance,
-	AttendanceRequest,
-	AttendanceStatistic
+	AttendanceLog,
+	AttendanceResponse,
+	AttendanceRequest
 } from "$lib/types/attendance";
 
 /* ===========================
-   GET
+   GET ALL (Admin)
 =========================== */
 
-export function getAttendances() {
-	return get<Attendance[]>("/attendance");
+export function getAllAttendanceLogs() {
+	return get<AttendanceResponse>("/attedanceLogs");
 }
 
-export function getAttendance(id: string) {
-	return get<Attendance>(`/attendance/${id}`);
-}
+/* ===========================
+   GET MY HISTORY (Employee)
+=========================== */
 
-export function getTodayAttendance() {
-	return get<Attendance>("/attendance/today");
-}
-
-export function getAttendanceHistory() {
-	return get<Attendance[]>("/attendance/history");
-}
-
-export function getAttendanceStatistic() {
-	return get<AttendanceStatistic>("/attendance/statistic");
+export function getMyAttendanceHistory() {
+	return get<AttendanceResponse>("/attedanceLogs/my-history");
 }
 
 /* ===========================
    CHECK IN
 =========================== */
 
-export function checkIn(
-	data: AttendanceRequest
-) {
-	return post<Attendance>(
-		"/attendance/check-in",
+export function checkIn(data: AttendanceRequest) {
+	return post<{ success: boolean; message: string; data: AttendanceLog }>(
+		"/attedanceLogs/check-in",
 		data
 	);
 }
@@ -49,19 +39,9 @@ export function checkIn(
    CHECK OUT
 =========================== */
 
-export function checkOut(
-	data: AttendanceRequest
-) {
-	return put<Attendance>(
-		"/attendance/check-out",
+export function checkOut(data: AttendanceRequest) {
+	return put<{ success: boolean; message: string; data: AttendanceLog }>(
+		"/attedanceLogs/check-out",
 		data
 	);
-}
-
-/* ===========================
-   DELETE
-=========================== */
-
-export function deleteAttendance(id: string) {
-	return del<void>(`/attendance/${id}`);
 }

@@ -3,7 +3,6 @@
 	import type { NavigationGroup } from "$lib/config/navigations";
 	import { X, Power } from "@lucide/svelte";
 	import { auth } from "$lib/stores/auth";
-	import { logout } from "$lib/services/auth.service";
 	import { goto } from "$app/navigation";
 
 	interface Props {
@@ -22,15 +21,9 @@
 		onClose
 	}: Props = $props();
 
-	async function handleLogout() {
-		try {
-			await logout();
-		} catch (error) {
-			console.error("Logout error:", error);
-		} finally {
-			auth.logout();
-			goto("/login");
-		}
+	function handleLogout() {
+		auth.logout();
+		goto("/login");
 	}
 </script>
 

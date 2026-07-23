@@ -71,6 +71,7 @@
 
 			<div class="location-box">
 				<MapPin size={20} color="#2563eb" />
+				<!-- ini belum menggunakan longitude dan latitude -->
 				<span>Lokasi Terdeteksi: PT. Company Office (Radius Valid)</span>
 			</div>
 

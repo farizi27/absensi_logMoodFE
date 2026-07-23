@@ -6,11 +6,28 @@
 	import Modal from "$lib/components/ui/Modal.svelte";
 	import Toast from "$lib/components/ui/Toast.svelte";
 	import Spinner from "$lib/components/ui/Spinner.svelte";
-	import { Building2, Plus, Users, Trash2, AlertTriangle } from "@lucide/svelte";
+	import { onMount } from "svelte";
+	import {
+		getDepartments,
+		createDepartment,
+		updateDepartment,
+		deleteDepartment
+	} from "$lib/services/department.service";
+	import type {
+		Department
+	} from "$lib/types/department";
+	import { Building2, Plus, Users, Trash2, AlertTriangle, Pencil } from "@lucide/svelte";
 
+	// State for Add Modal
 	let isAddModalOpen = $state(false);
 	let newDivName = $state("");
 	let newDivDesc = $state("");
+
+	// State for Edit Modal
+	let isEditModalOpen = $state(false);
+	let editDivId = $state<number | null>(null);
+	let editDivName = $state("");
+	let editDivDesc = $state("");
 
 	// State for Delete Modal
 	let isDeleteModalOpen = $state(false);
@@ -24,13 +41,7 @@
 	// Loading State
 	let isLoading = $state(false);
 
-	let divisions = $state([
-		{ id: 1, name: "IT Engineering", count: 12, description: "Pengembangan software & infrastruktur IT", status: "Aktif" },
-		{ id: 2, name: "Human Resources", count: 6, description: "Manajemen SDM & rekrutmen karyawan", status: "Aktif" },
-		{ id: 3, name: "Marketing", count: 10, description: "Pemasaran digital & branding perusahaan", status: "Aktif" },
-		{ id: 4, name: "Finance", count: 8, description: "Pengelolaan keuangan & akutansi", status: "Aktif" },
-		{ id: 5, name: "Operations", count: 12, description: "Operasional harian kantor & logistik", status: "Aktif" }
-	]);
+	let departments = $state<Department[]>([]);
 
 	function showToast(message: string, type: "success" | "danger" | "warning" | "info" = "success") {
 		toastMessage = message;
@@ -48,31 +59,133 @@
 		isAddModalOpen = false;
 	}
 
-	async function handleAddDivision() {
-		if (!newDivName) {
-			showToast("Mohon isi Nama Divisi.", "warning");
+	function openEditModal(department: Department) {
+		editDivId = department.id;
+		editDivName = department.departmentsName;
+		editDivDesc = department.description;
+		isEditModalOpen = true;
+	}
+
+	function closeEditModal() {
+		isEditModalOpen = false;
+		editDivId = null;
+	}
+
+	async function loadDepartments() {
+		try {
+			isLoading = true;
+
+			const result = await getDepartments();
+			console.log('API result:', result);
+			departments = result.data;
+		} catch (error) {
+			console.error(error);
+
+			showToast(
+				"Gagal mengambil data department",
+				"danger"
+			);
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	onMount(loadDepartments);
+
+	async function handleAddDepartment() {
+
+		if (!newDivName || !newDivDesc) {
+
+			showToast(
+				"Nama Department dan Deskripsi wajib diisi",
+				"warning"
+			);
+
 			return;
 		}
 
-		isLoading = true;
-		
-		// Simulate API call
-		await new Promise(resolve => setTimeout(resolve, 800));
+		try {
 
-		divisions = [
-			...divisions,
-			{
-				id: divisions.length + 1,
-				name: newDivName,
-				count: 0,
-				description: newDivDesc || "Divisi baru perusahan",
-				status: "Aktif"
-			}
-		];
+			isLoading = true;
 
-		isLoading = false;
-		closeAddModal();
-		showToast(`Divisi ${newDivName} berhasil ditambahkan!`, "success");
+			await createDepartment({
+				departmentsName: newDivName,
+				description: newDivDesc
+			});
+
+			await loadDepartments();
+
+			closeAddModal();
+
+			showToast(
+				"Department berhasil ditambahkan",
+				"success"
+			);
+
+		} catch (error: any) {
+
+			console.error(error);
+
+			showToast(
+				error?.message || "Gagal menambahkan Department",
+				"danger"
+			);
+
+		} finally {
+
+			isLoading = false;
+
+		}
+
+	}
+
+	async function handleEditDepartment() {
+
+		if (!editDivId) return;
+
+		if (!editDivName || !editDivDesc) {
+
+			showToast(
+				"Nama Department dan Deskripsi wajib diisi",
+				"warning"
+			);
+
+			return;
+		}
+
+		try {
+
+			isLoading = true;
+
+			await updateDepartment(editDivId, {
+				departmentsName: editDivName,
+				description: editDivDesc
+			});
+
+			await loadDepartments();
+
+			closeEditModal();
+
+			showToast(
+				"Department berhasil diperbarui",
+				"success"
+			);
+
+		} catch (error: any) {
+
+			console.error(error);
+
+			showToast(
+				error?.message || "Gagal memperbarui Department",
+				"danger"
+			);
+
+		} finally {
+
+			isLoading = false;
+
+		}
+
 	}
 
 	function confirmDelete(div: any) {
@@ -81,23 +194,45 @@
 	}
 
 	async function handleDelete() {
-		if (divToDelete) {
-			isLoading = true;
-			
-			// Simulate API call
-			await new Promise(resolve => setTimeout(resolve, 800));
 
-			divisions = divisions.filter(d => d.id !== divToDelete.id);
-			isLoading = false;
-			showToast(`Data divisi ${divToDelete.name} berhasil dihapus.`, "success");
-			divToDelete = null;
+		if (!divToDelete) return;
+
+		try {
+
+			isLoading = true;
+
+			await deleteDepartment(divToDelete.id);
+
+			await loadDepartments();
+
+			showToast(
+				"Department berhasil dihapus",
+				"success"
+			);
+
 			isDeleteModalOpen = false;
+			divToDelete = null;
+
+		} catch (error: any) {
+
+			console.error(error);
+
+			showToast(
+				error?.message || "Gagal menghapus Department",
+				"danger"
+			);
+
+		} finally {
+
+			isLoading = false;
+
 		}
+
 	}
 </script>
 
 <svelte:head>
-	<title>Data Divisi - LogMood Admin</title>
+	<title>Data departments - LogMood Admin</title>
 </svelte:head>
 
 <!-- Toast Notification -->
@@ -116,35 +251,48 @@
 	<div class="header-action">
 		<div>
 			<h1>Data Divisi</h1>
-			<p>Kelola daftar divisi dan alokasi karyawan.</p>
+			<p>Kelola daftar department dan alokasi karyawan.</p>
 		</div>
 		<Button onClick={openAddModal}>
 			<Plus size={18} style="margin-right: 6px;" />
-			Tambah Divisi
+			Tambah Department
 		</Button>
 	</div>
 
 	<!-- Using Card UI Component -->
 	<div class="divisions-grid">
-		{#each divisions as div}
+		{#each departments as department}
 			<Card hover border padding="lg">
 				<div class="card-head">
 					<div class="icon-wrap">
-						<Building2 size={24} />
+						<Building2 size={24}/>
 					</div>
-					<Badge variant="info">
-						<Users size={14} style="margin-right: 4px;" />
-						{div.count} Anggota
-					</Badge>
 				</div>
-				<h3 class="div-title">{div.name}</h3>
-				<p class="div-desc">{div.description}</p>
+				<h3 class="div-title">
+					{department.departmentsName}
+				</h3>
+				<p class="div-desc">
+					{department.description}
+				</p>
 				<div class="card-footer">
-					<Button variant="ghost" size="sm">Kelola Divisi</Button>
-					<Button variant="danger" size="sm" onClick={() => confirmDelete(div)}>
-						<Trash2 size={16} />
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => openEditModal(department)}
+					>
+						<Pencil size={16} style="margin-right: 4px;" />
+						Edit
 					</Button>
+					<Button
+						variant="danger"
+						size="sm"
+						onClick={() => confirmDelete(department)}
+					>
+						<Trash2 size={16}/>
+					</Button>
+
 				</div>
+
 			</Card>
 		{/each}
 	</div>
@@ -152,34 +300,50 @@
 
 <!-- Modal Tambah Divisi Baru -->
 <Modal open={isAddModalOpen} title="Tambah Divisi Baru" onClose={closeAddModal}>
-	<form onsubmit={(e) => { e.preventDefault(); handleAddDivision(); }} class="modal-form">
-		<Input label="Nama Divisi" placeholder="Contoh: Quality Assurance" bind:value={newDivName} required />
-		<Input label="Deskripsi Divisi" placeholder="Jelaskan peran divisi ini..." bind:value={newDivDesc} />
+	<form onsubmit={(e) => { e.preventDefault(); handleAddDepartment(); }} class="modal-form">
+		<Input label="Nama Department" placeholder="Contoh: Quality Assurance" bind:value={newDivName} required />
+		<Input label="Deskripsi Department" placeholder="Jelaskan peran divisi ini..." bind:value={newDivDesc} />
 	</form>
 
 	{#snippet footer()}
 		<Button variant="ghost" onClick={closeAddModal}>Batal</Button>
-		<Button onClick={handleAddDivision}>
+		<Button onClick={handleAddDepartment}>
 			<Plus size={18} style="margin-right: 6px;" />
-			Simpan Divisi
+			Simpan Department
+		</Button>
+	{/snippet}
+</Modal>
+
+<!-- Modal Edit Divisi -->
+<Modal open={isEditModalOpen} title="Edit Department" onClose={closeEditModal}>
+	<form onsubmit={(e) => { e.preventDefault(); handleEditDepartment(); }} class="modal-form">
+		<Input label="Nama Department" placeholder="Contoh: Quality Assurance" bind:value={editDivName} required />
+		<Input label="Deskripsi Department" placeholder="Jelaskan peran divisi ini..." bind:value={editDivDesc} />
+	</form>
+
+	{#snippet footer()}
+		<Button variant="ghost" onClick={closeEditModal}>Batal</Button>
+		<Button onClick={handleEditDepartment}>
+			<Pencil size={18} style="margin-right: 6px;" />
+			Simpan Perubahan
 		</Button>
 	{/snippet}
 </Modal>
 
 <!-- Modal Konfirmasi Hapus -->
-<Modal open={isDeleteModalOpen} title="Konfirmasi Hapus Divisi" onClose={() => isDeleteModalOpen = false}>
+<Modal open={isDeleteModalOpen} title="Konfirmasi Hapus Department" onClose={() => isDeleteModalOpen = false}>
 	<div class="delete-confirmation">
 		<div class="warning-icon">
 			<AlertTriangle size={48} color="var(--color-danger)" />
 		</div>
-		<p>Apakah Anda yakin ingin menghapus divisi <strong>{divToDelete?.name}</strong>?</p>
-		<p class="text-muted">Semua data terkait divisi ini akan ikut terhapus.</p>
+		<p>Apakah Anda yakin ingin menghapus department <strong>{divToDelete?.departmentsName}</strong>?</p>
+		<p class="text-muted">Semua data terkait department ini akan ikut terhapus.</p>
 	</div>
 
 	{#snippet footer()}
 		<Button variant="ghost" onClick={() => isDeleteModalOpen = false}>Batal</Button>
 		<Button variant="danger" onClick={handleDelete}>
-			Ya, Hapus Divisi
+			Ya, Hapus Department
 		</Button>
 	{/snippet}
 </Modal>

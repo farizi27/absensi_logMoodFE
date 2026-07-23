@@ -1,37 +1,39 @@
-export type MoodType =
-	| "happy"
-	| "excited"
-	| "neutral"
-	| "tired"
-	| "sad"
-	| "angry";
+export type MoodLevel = "Excited" | "Happy" | "Neutral" | "Tired" | "Stressed";
 
-export interface Mood {
-	id: string;
+export interface MoodJournal {
+	id: number;
+	employeeId: number;
+	employeeName: string | null;
+	attendanceLogId: number | null;
+	moodLevel: MoodLevel;
+	note: string | null;
+	createdAt: string;
+}
 
-	employeeId: string;
-	employeeName?: string;
-
-	mood: MoodType;
-
-	note?: string;
-
-	date: string;
-
-	createdAt?: string;
-	updatedAt?: string;
+export interface MoodJournalResponse {
+	success: boolean;
+	data: MoodJournal[];
 }
 
 export interface MoodRequest {
-	mood: MoodType;
+	moodLevel: MoodLevel;
 	note?: string;
+	attendanceLogId?: number;
 }
 
-export interface MoodStatistic {
-	happy: number;
-	excited: number;
-	neutral: number;
-	tired: number;
-	sad: number;
-	angry: number;
-}
+// Mapping mood levels to Indonesian labels for UI
+export const MOOD_LABEL: Record<MoodLevel, string> = {
+	Excited: "Semangat",
+	Happy: "Senang",
+	Neutral: "Biasa",
+	Tired: "Lelah",
+	Stressed: "Stres"
+};
+
+export const MOOD_EMOJI: Record<MoodLevel, string> = {
+	Excited: "🤩",
+	Happy: "😊",
+	Neutral: "😐",
+	Tired: "🥱",
+	Stressed: "😠"
+};

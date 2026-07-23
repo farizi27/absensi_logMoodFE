@@ -25,6 +25,16 @@ export interface LoginResponse {
 	user: User;
 }
 
+export interface RegisterRequest {
+    full_name: string;
+    name: string;
+    email: string;
+    password: string;
+}
+export interface RegisterResponse {
+	succes: boolean;
+	message: string;
+}
 export interface ChangePasswordRequest {
 	oldPassword: string;
 	newPassword: string;

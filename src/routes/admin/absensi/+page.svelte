@@ -5,39 +5,177 @@
 	import Badge from "$lib/components/ui/Badge.svelte";
 	import Button from "$lib/components/ui/Button.svelte";
 	import Input from "$lib/components/ui/Input.svelte";
+	import Spinner from "$lib/components/ui/Spinner.svelte";
+	import Toast from "$lib/components/ui/Toast.svelte";
+	import EmptyState from "$lib/components/common/EmptyState.svelte";
 	import { CheckCircle, Clock, AlertTriangle, UserX, Download } from "@lucide/svelte";
+	import { onMount } from "svelte";
+	import { getAllAttendanceLogs } from "$lib/services/attendance.service";
+	import { getDepartments } from "$lib/services/department.service";
+	import type { AttendanceLog } from "$lib/types/attendance";
+	import type { Department } from "$lib/types/department";
 
+	// Initial date set to Today (YYYY-MM-DD)
 	let searchQuery = $state("");
 	let filterDivision = $state("Semua");
 	let filterDate = $state(new Date().toISOString().split("T")[0]);
 
-	const attendanceStats = [
-		{ title: "Hadir Tepat Waktu", value: "38", desc: "80% dari total", color: "success" as const, iconComp: CheckCircle },
-		{ title: "Terlambat", value: "4", desc: "Perlu konfirmasi", color: "warning" as const, iconComp: Clock },
-		{ title: "Izin / Sakit", value: "4", desc: "Dengan surat keterangan", color: "primary" as const, iconComp: AlertTriangle },
-		{ title: "Tanpa Keterangan", value: "2", desc: "Alpha", color: "danger" as const, iconComp: UserX }
-	];
+	let attendanceLogs = $state<AttendanceLog[]>([]);
+	let departments = $state<Department[]>([]);
+	let isLoading = $state(false);
 
-	const attendanceRecords = [
-		{ name: "Budi Santoso", division: "IT Engineering", date: "2026-07-22", checkIn: "07:55:12", checkOut: "17:02:40", status: "Hadir" },
-		{ name: "Siti Rahma", division: "Human Resources", date: "2026-07-22", checkIn: "08:02:10", checkOut: "17:00:15", status: "Hadir" },
-		{ name: "Ahmad Rizky", division: "Marketing", date: "2026-07-22", checkIn: "08:35:00", checkOut: "17:15:30", status: "Terlambat" },
-		{ name: "Dewi Lestari", division: "Finance", date: "2026-07-22", checkIn: "-", checkOut: "-", status: "Izin" }
-	];
+	let toastVisible = $state(false);
+	let toastMessage = $state("");
+	let toastType = $state<"success" | "danger" | "warning" | "info">("success");
 
+	function showToast(message: string, type: "success" | "danger" | "warning" | "info" = "success") {
+		toastMessage = message;
+		toastType = type;
+		toastVisible = true;
+	}
+
+	async function loadData() {
+		try {
+			isLoading = true;
+			const [logsRes, deptRes] = await Promise.all([
+				getAllAttendanceLogs().catch(() => ({ data: [] })),
+				getDepartments().catch(() => ({ data: [] }))
+			]);
+			attendanceLogs = logsRes.data || [];
+			departments = deptRes.data || [];
+		} catch (error: any) {
+			console.error(error);
+			showToast(error?.message || "Gagal mengambil data absensi", "danger");
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	onMount(loadData);
+
+	// Summary Cards recalculated based on the selected filterDate!
+	const dateFilteredLogs = $derived(
+		attendanceLogs.filter((log) => {
+			if (!filterDate) return true;
+			// Extract YYYY-MM-DD from attendanceDate or createdAt
+			const logDate = log.attendanceDate 
+				? log.attendanceDate.split("T")[0] 
+				: log.createdAt ? log.createdAt.split("T")[0] : "";
+			return logDate === filterDate;
+		})
+	);
+
+	const stats = $derived(() => {
+		const logsForDate = dateFilteredLogs;
+		const total = logsForDate.length;
+
+		const presentCount = logsForDate.filter(l => l.attendanceStatus === "present").length;
+		const lateCount = logsForDate.filter(l => l.attendanceStatus === "late").length;
+		const absentCount = logsForDate.filter(l => l.attendanceStatus === "absent").length;
+		const leaveCount = logsForDate.filter(l => l.attendanceStatus === "leave").length;
+
+		const presentPct = total > 0 ? Math.round((presentCount / total) * 100) : 0;
+
+		return [
+			{
+				title: "Hadir Tepat Waktu",
+				value: presentCount.toString(),
+				desc: `${presentPct}% dari total presensi`,
+				color: "success" as const,
+				iconComp: CheckCircle
+			},
+			{
+				title: "Terlambat",
+				value: lateCount.toString(),
+				desc: "Melewati jam 08:00",
+				color: "warning" as const,
+				iconComp: Clock
+			},
+			{
+				title: "Izin / Sakit",
+				value: leaveCount.toString(),
+				desc: "Keterangan izin",
+				color: "primary" as const,
+				iconComp: AlertTriangle
+			},
+			{
+				title: "Tanpa Keterangan",
+				value: absentCount.toString(),
+				desc: "Alpha",
+				color: "danger" as const,
+				iconComp: UserX
+			}
+		];
+	});
+
+	// Filter records for table view
 	const filteredRecords = $derived(
-		attendanceRecords.filter((rec) => {
-			const matchName = rec.name.toLowerCase().includes(searchQuery.toLowerCase());
-			const matchDiv = filterDivision === "Semua" || rec.division === filterDivision;
-			const matchDate = !filterDate || rec.date === filterDate;
+		attendanceLogs.filter((rec) => {
+			const name = rec.employeeName ?? "";
+			const matchName = name.toLowerCase().includes(searchQuery.toLowerCase());
+			const matchDiv = filterDivision === "Semua" || rec.departmentName === filterDivision;
+
+			const logDate = rec.attendanceDate 
+				? rec.attendanceDate.split("T")[0] 
+				: rec.createdAt ? rec.createdAt.split("T")[0] : "";
+			const matchDate = !filterDate || logDate === filterDate;
+
 			return matchName && matchDiv && matchDate;
 		})
 	);
+
+	function formatTime(timeStr: string | null): string {
+		if (!timeStr) return "-";
+		try {
+			const date = new Date(timeStr);
+			if (isNaN(date.getTime())) return timeStr;
+			return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+		} catch {
+			return timeStr;
+		}
+	}
+
+	function formatDate(dateStr: string | null): string {
+		if (!dateStr) return "-";
+		try {
+			const date = new Date(dateStr);
+			if (isNaN(date.getTime())) return dateStr;
+			return date.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+		} catch {
+			return dateStr;
+		}
+	}
+
+	function getStatusBadge(status: string): { label: string; variant: "success" | "warning" | "danger" | "info" } {
+		switch (status) {
+			case "present":
+				return { label: "Hadir", variant: "success" };
+			case "late":
+				return { label: "Terlambat", variant: "warning" };
+			case "absent":
+				return { label: "Alpha", variant: "danger" };
+			case "leave":
+				return { label: "Izin", variant: "info" };
+			default:
+				return { label: status || "Hadir", variant: "success" };
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>Monitoring Absensi - Admin</title>
 </svelte:head>
+
+<Toast 
+	visible={toastVisible} 
+	message={toastMessage} 
+	type={toastType} 
+	onClose={() => toastVisible = false} 
+/>
+
+{#if isLoading}
+	<Spinner fullscreen label="Memuat data presensi..." />
+{/if}
 
 <div class="page-container">
 	<div class="header-action">
@@ -51,9 +189,9 @@
 		</Button>
 	</div>
 
-	<!-- Using AttendanceCard components -->
+	<!-- Stats Cards recalculated by date filter -->
 	<div class="stats-grid">
-		{#each attendanceStats as stat}
+		{#each stats() as stat}
 			<AttendanceCard
 				title={stat.title}
 				value={stat.value}
@@ -67,7 +205,7 @@
 		{/each}
 	</div>
 
-	<!-- Filter Bar using Card UI: Search Name, Filter Division, Filter Date -->
+	<!-- Filter Bar -->
 	<Card padding="md">
 		<div class="filter-bar">
 			<div class="filter-item search-box">
@@ -78,11 +216,9 @@
 				<label for="division-select">Divisi:</label>
 				<select id="division-select" bind:value={filterDivision} class="custom-select">
 					<option value="Semua">Semua Divisi</option>
-					<option value="IT Engineering">IT Engineering</option>
-					<option value="Human Resources">Human Resources</option>
-					<option value="Marketing">Marketing</option>
-					<option value="Finance">Finance</option>
-					<option value="Operations">Operations</option>
+					{#each departments as dept}
+						<option value={dept.departmentsName}>{dept.departmentsName}</option>
+					{/each}
 				</select>
 			</div>
 
@@ -93,7 +229,7 @@
 		</div>
 	</Card>
 
-	<!-- Table using Card & Table UI components -->
+	<!-- Table UI components -->
 	<Card padding="lg">
 		<h2 class="card-title">Daftar Log Presensi</h2>
 		<Table hoverable striped bordered>
@@ -109,21 +245,27 @@
 			</thead>
 			<tbody>
 				{#each filteredRecords as record}
+					{@const statusBadge = getStatusBadge(record.attendanceStatus)}
 					<tr>
-						<td><strong>{record.name}</strong></td>
-						<td>{record.division}</td>
-						<td>{record.date}</td>
-						<td>{record.checkIn}</td>
-						<td>{record.checkOut}</td>
+						<td><strong>{record.employeeName ?? "Unknown"}</strong></td>
+						<td>{record.departmentName ?? "-"}</td>
+						<td>{formatDate(record.attendanceDate)}</td>
+						<td>{formatTime(record.checkIn)}</td>
+						<td>{formatTime(record.checkOut)}</td>
 						<td>
-							<Badge variant={record.status === 'Hadir' ? 'success' : record.status === 'Terlambat' ? 'warning' : 'info'}>
-								{record.status}
+							<Badge variant={statusBadge.variant}>
+								{statusBadge.label}
 							</Badge>
 						</td>
 					</tr>
 				{:else}
 					<tr>
-						<td colspan="6" class="no-data">Tidak ada data presensi yang sesuai dengan filter.</td>
+						<td colspan="6">
+							<EmptyState
+								title="Tidak ada log presensi"
+								description="Belum ada catatan presensi karyawan yang sesuai dengan filter."
+							/>
+						</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -211,11 +353,5 @@
 		font-weight: 600;
 		margin-bottom: 1rem;
 		color: var(--color-text);
-	}
-
-	.no-data {
-		text-align: center;
-		padding: 2rem;
-		color: var(--color-text-light);
 	}
 </style>

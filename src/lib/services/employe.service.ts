@@ -4,7 +4,9 @@ import { del, get, post, put, patch } from "./api";
 
 import type {
 	Employee,
-	EmployeeRequest
+	EmployeeResponse,
+	EmployeeCreateRequest,
+	EmployeeUpdateRequest
 } from "$lib/types/employee";
 
 /* ===========================
@@ -12,14 +14,14 @@ import type {
 =========================== */
 
 export function getEmployees() {
-	return get<Employee[]>("/employees");
+	return get<EmployeeResponse>("/employees");
 }
 
 /* ===========================
    GET BY ID
 =========================== */
 
-export function getEmployee(id: string) {
+export function getEmployee(id: number) {
 	return get<Employee>(`/employees/${id}`);
 }
 
@@ -28,7 +30,7 @@ export function getEmployee(id: string) {
 =========================== */
 
 export function createEmployee(
-	data: EmployeeRequest
+	data: EmployeeCreateRequest
 ) {
 	return post<Employee>(
 		"/employees",
@@ -41,8 +43,8 @@ export function createEmployee(
 =========================== */
 
 export function updateEmployee(
-	id: string,
-	data: EmployeeRequest
+	id: number,
+	data: EmployeeUpdateRequest
 ) {
 	return put<Employee>(
 		`/employees/${id}`,
@@ -54,7 +56,7 @@ export function updateEmployee(
    DELETE
 =========================== */
 
-export function deleteEmployee(id: string) {
+export function deleteEmployee(id: number) {
 	return del<void>(
 		`/employees/${id}`
 	);
@@ -65,7 +67,7 @@ export function deleteEmployee(id: string) {
 =========================== */
 
 export function updateEmployeeStatus(
-	id: string,
+	id: number,
 	isActive: boolean
 ) {
 	return patch<Employee>(

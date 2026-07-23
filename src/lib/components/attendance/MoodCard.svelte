@@ -1,61 +1,41 @@
 <script lang="ts">
 	import Card from "$lib/components/ui/Card.svelte";
+	import type { MoodLevel } from "$lib/types/mood";
+	import { MOOD_LABEL, MOOD_EMOJI } from "$lib/types/mood";
 
 	interface Props {
-		mood: "senang" | "biasa" | "sedih" | "marah" | "lelah";
-		note?: string;
-		date?: string;
+		mood: MoodLevel;
+		count?: number;
+		percentage?: string;
 	}
 
 	let {
 		mood,
-		note = "",
-		date = ""
+		count = 0,
+		percentage = "0%"
 	}: Props = $props();
 
-	const moods = {
-		senang: {
-			emoji: "😊",
-			color: "success",
-			label: "Senang"
-		},
-		biasa: {
-			emoji: "😐",
-			color: "primary",
-			label: "Biasa"
-		},
-		sedih: {
-			emoji: "😔",
-			color: "warning",
-			label: "Sedih"
-		},
-		marah: {
-			emoji: "😠",
-			color: "danger",
-			label: "Marah"
-		},
-		lelah: {
-			emoji: "🥱",
-			color: "secondary",
-			label: "Lelah"
-		}
-	} as const;
+	const colorMap: Record<MoodLevel, string> = {
+		Excited: "success",
+		Happy: "success",
+		Neutral: "primary",
+		Tired: "secondary",
+		Stressed: "danger"
+	};
 
-	const current = $derived(moods[mood]);
+	const currentColor = $derived(colorMap[mood]);
+	const currentEmoji = $derived(MOOD_EMOJI[mood]);
+	const currentLabel = $derived(MOOD_LABEL[mood]);
 </script>
 
 <Card padding="lg" hover border>
-	<div class={["mood-inner", current.color]}>
+	<div class={["mood-inner", currentColor]}>
 		<div class="emoji">
-			{current.emoji}
+			{currentEmoji}
 		</div>
-		<h3>{current.label}</h3>
-		{#if note}
-			<p>{note}</p>
-		{/if}
-		{#if date}
-			<small>{date}</small>
-		{/if}
+		<h3>{currentLabel}</h3>
+		<p>{count} Karyawan</p>
+		<small>{percentage} Total</small>
 	</div>
 </Card>
 

@@ -3,22 +3,26 @@
 	import Table from "$lib/components/ui/Table.svelte";
 	import Badge from "$lib/components/ui/Badge.svelte";
 	import Avatar from "$lib/components/ui/Avatar.svelte";
+	import EmptyState from "$lib/components/common/EmptyState.svelte";
 	import StatisticCard from "$lib/components/attendance/StatisticCard.svelte";
+	import type { DashboardResponse } from "$lib/types/dashboard";
 	import { Users, ClipboardCheck, Smile, Building2 } from "@lucide/svelte";
 
-	const stats = [
-		{ title: "Total Karyawan", value: "48", description: "+4 bulan ini", variant: "primary" as const, iconComponent: Users },
-		{ title: "Kehadiran Hari Ini", value: "42 / 48", description: "87.5% Hadir", variant: "success" as const, iconComponent: ClipboardCheck },
-		{ title: "Mood Rata-rata", value: "Senang (4.2/5)", description: "Stabil minggu ini", variant: "warning" as const, iconComponent: Smile },
-		{ title: "Total Divisi", value: "6 Divisi", description: "Semua aktif", variant: "secondary" as const, iconComponent: Building2 }
-	];
+	import { onMount } from "svelte";
+	import { getDashboard } from "$lib/services/dashboard.service";
 
-	const recentAttendance = [
-		{ name: "Budi Santoso", division: "IT Engineering", time: "07:55 AM", status: "Tepat Waktu", mood: "😄 Senang" },
-		{ name: "Siti Rahma", division: "Human Resources", time: "08:02 AM", status: "Tepat Waktu", mood: "😊 Baik" },
-		{ name: "Ahmad Rizky", division: "Marketing", time: "08:25 AM", status: "Terlambat", mood: "😐 Netral" },
-		{ name: "Dewi Lestari", division: "Finance", time: "07:48 AM", status: "Tepat Waktu", mood: "😄 Senang" }
-	];
+	let dashboard = $state<DashboardResponse["data"] | null>(null);
+
+	onMount(async () => {
+		try {
+			const result = await getDashboard();
+
+			dashboard = result.data;
+
+		} catch (err) {
+			console.error(err);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -34,54 +38,122 @@
 	</div>
 
 	<!-- Stats Grid using StatisticCard Component -->
-	<div class="stats-grid">
-		{#each stats as item}
-			<StatisticCard
-				title={item.title}
-				value={item.value}
-				description={item.description}
-				variant={item.variant}
-			>
-				{#snippet icon()}
-					<item.iconComponent size={24} />
-				{/snippet}
-			</StatisticCard>
-		{/each}
-	</div>
+<div class="stats-grid">
+	<StatisticCard
+		title="Total Karyawan"
+		value={`${dashboard?.summary.totalEmployees ?? 0}`}
+		description="Karyawan Aktif"
+		variant="primary"
+	>
+		{#snippet icon()}
+			<Users size={24} />
+		{/snippet}
+	</StatisticCard>
+
+	<StatisticCard
+		title="Kehadiran Hari Ini"
+		value={`${dashboard?.summary.attendanceToday ?? 0}`}
+		description={`${dashboard?.summary.attendancePercentage ?? 0}% Hadir`}
+		variant="success"
+	>
+		{#snippet icon()}
+			<ClipboardCheck size={24} />
+		{/snippet}
+	</StatisticCard>
+
+	<StatisticCard
+		title="Mood Hari Ini"
+		value={dashboard?.summary.averageMood ?? "-"}
+		description="Mood Terbanyak Hari Ini"
+		variant="warning"
+	>
+		{#snippet icon()}
+			<Smile size={24} />
+		{/snippet}
+	</StatisticCard>
+
+	<StatisticCard
+		title="Total Divisi"
+		value={`${dashboard?.summary.totalDepartments ?? 0}`}
+		description="Divisi Aktif"
+		variant="secondary"
+	>
+		{#snippet icon()}
+			<Building2 size={24} />
+		{/snippet}
+	</StatisticCard>
+</div>
 
 	<!-- Recent Attendance using Card, Table, Avatar & Badge Components -->
-	<Card padding="lg">
-		<h2 class="card-title">Absensi & Mood Terkini</h2>
-		<Table hoverable striped bordered>
-			<thead>
-				<tr>
-					<th>Karyawan</th>
-					<th>Divisi</th>
-					<th>Waktu Masuk</th>
-					<th>Status</th>
-					<th>Mood</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each recentAttendance as row}
+<Card padding="lg">
+	<h2 class="card-title">Absensi & Mood Terkini</h2>
+
+	<Table hoverable striped bordered>
+		<thead>
+			<tr>
+				<th>Karyawan</th>
+				<th>Divisi</th>
+				<th>Waktu Masuk</th>
+				<th>Status</th>
+				<th>Mood</th>
+			</tr>
+		</thead>
+		<tbody>
+			{#if dashboard?.recentAttendance?.length}
+				{#each dashboard.recentAttendance as row}
 					<tr>
 						<td class="user-cell">
-							<Avatar name={row.name} size={32} />
-							<span><strong>{row.name}</strong></span>
+							<Avatar name={row.employeeName} size={32} />
+							<strong>{row.employeeName}</strong>
 						</td>
-						<td>{row.division}</td>
-						<td>{row.time}</td>
+
+						<td>{row.department ?? "-"}</td>
+
 						<td>
-							<Badge variant={row.status === 'Tepat Waktu' ? 'success' : 'warning'}>
-								{row.status}
+							{row.checkIn
+								? new Date(row.checkIn).toLocaleTimeString("id-ID", {
+										hour: "2-digit",
+										minute: "2-digit"
+								})
+								: "-"}
+						</td>
+
+						<td>
+							<Badge
+								variant={
+									row.attendanceStatus === "present"
+										? "success"
+										: row.attendanceStatus === "late"
+										? "warning"
+										: "danger"
+								}
+							>
+								{
+									row.attendanceStatus === "present"
+										? "Tepat Waktu"
+										: row.attendanceStatus === "late"
+										? "Terlambat"
+										: "Tidak Hadir"
+								}
 							</Badge>
 						</td>
-						<td>{row.mood}</td>
+
+						<td>{row.mood ?? "-"}</td>
 					</tr>
 				{/each}
-			</tbody>
-		</Table>
-	</Card>
+			{:else}
+				<tr>
+					<td colspan="5" style="text-align:center; padding:2rem;">
+						<EmptyState
+							title="Tidak ada log presensi"
+							description="Belum ada catatan presensi karyawan."
+						/>
+					</td>
+				</tr>
+			{/if}
+		</tbody>
+	</Table>
+</Card>
 </div>
 
 <style>

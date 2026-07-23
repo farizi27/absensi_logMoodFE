@@ -9,56 +9,119 @@
 	import Modal from "$lib/components/ui/Modal.svelte";
 	import Toast from "$lib/components/ui/Toast.svelte";
 	import Spinner from "$lib/components/ui/Spinner.svelte";
-	import { Plus, LayoutGrid, List, UserPlus, Trash2, AlertTriangle } from "@lucide/svelte";
+	import { Plus, LayoutGrid, List, UserPlus, Trash2, AlertTriangle, Pencil } from "@lucide/svelte";
+	import EmptyState from "$lib/components/common/EmptyState.svelte";
+	import { onMount } from "svelte";
+	import { getEmployees, createEmployee, updateEmployee, deleteEmployee } from "$lib/services/employe.service";
+	import { get } from "$lib/services/api";
+	import type { Employee, EmployeeCreateRequest, EmployeeUpdateRequest } from "$lib/types/employee";
 
+	// ========== DATA STATE ==========
+	let employees = $state<Employee[]>([]);
+	let departments = $state<{ id: number; departmentsName: string }[]>([]);
+	let roles = $state<{ id: number; role_name: string }[]>([]);
+
+	// ========== LOAD DATA ==========
+	async function loadEmployees() {
+		try {
+			const result = await getEmployees();
+			employees = result.data;
+		} catch (err) {
+			console.error("Gagal memuat data karyawan:", err);
+			showToast("Gagal memuat data karyawan.", "danger");
+		}
+	}
+
+	async function loadDepartments() {
+		try {
+			departments = await get<{ id: number; departmentsName: string }[]>("/departments");
+		} catch (err) {
+			console.error("Gagal memuat data divisi:", err);
+		}
+	}
+
+	async function loadRoles() {
+		try {
+			roles = await get<{ id: number; role_name: string }[]>("/roles");
+		} catch (err) {
+			console.error("Gagal memuat data role:", err);
+		}
+	}
+
+	onMount(() => {
+		loadEmployees();
+		loadDepartments();
+		loadRoles();
+	});
+
+	// ========== FILTER & VIEW STATE ==========
 	let searchQuery = $state("");
-	let viewMode = $state<"grid" | "table">("grid");
-	
-	// State for Add Modal
+	let filterDivision = $state("Semua");
+	let viewMode = $state<"grid" | "table">("table");
+
+	// ========== ADD MODAL STATE ==========
 	let isAddModalOpen = $state(false);
-	let newName = $state("");
-	let newEmail = $state("");
-	let newDivision = $state("IT Engineering");
-	let newRole = $state("Karyawan");
+	let newEmployeeCode = $state("");
+	let newFullName = $state("");
+	let newPhone = $state("");
+	let newDepartmentId = $state<number | undefined>(undefined);
+	let newRoleId = $state<number | undefined>(undefined);
 
-	// State for Delete Modal
+	// ========== EDIT MODAL STATE ==========
+	let isEditModalOpen = $state(false);
+	let editingEmployee = $state<Employee | null>(null);
+	let editEmployeeCode = $state("");
+	let editFullName = $state("");
+	let editEmail = $state("");
+	let editPhone = $state("");
+	let editDepartmentId = $state<number | undefined>(undefined);
+	let editRoleId = $state<number | undefined>(undefined);
+	let editStatus = $state("");
+
+	// ========== DELETE MODAL STATE ==========
 	let isDeleteModalOpen = $state(false);
-	let employeeToDelete = $state<any>(null);
+	let employeeToDelete = $state<Employee | null>(null);
 
-	// State for Toast Notification
+	// ========== TOAST STATE ==========
 	let toastVisible = $state(false);
 	let toastMessage = $state("");
 	let toastType = $state<"success" | "danger" | "warning" | "info">("success");
 
-	// Loading State
+	// ========== LOADING STATE ==========
 	let isLoading = $state(false);
 
-	let employees = $state([
-		{ id: "EMP-001", name: "Budi Santoso", email: "budi@company.com", division: "IT Engineering", role: "Karyawan", status: "Aktif" as const },
-		{ id: "EMP-002", name: "Siti Rahma", email: "siti@company.com", division: "Human Resources", role: "Admin", status: "Aktif" as const },
-		{ id: "EMP-003", name: "Ahmad Rizky", email: "ahmad@company.com", division: "Marketing", role: "Karyawan", status: "Aktif" as const },
-		{ id: "EMP-004", name: "Dewi Lestari", email: "dewi@company.com", division: "Finance", role: "Karyawan", status: "Nonaktif" as const }
-	]);
-
+	// ========== DERIVED ==========
 	const filteredEmployees = $derived(
-		employees.filter((e) =>
-			e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			e.division.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			e.email.toLowerCase().includes(searchQuery.toLowerCase())
-		)
+		employees.filter((e) => {
+			const keyword = searchQuery.toLowerCase();
+
+			const search =
+				e.fullName.toLowerCase().includes(keyword) ||
+				(e.email ?? "").toLowerCase().includes(keyword) ||
+				e.employeeCode.toLowerCase().includes(keyword);
+
+			const division =
+				filterDivision === "Semua" ||
+				e.department === filterDivision;
+
+			return search && division;
+		})
 	);
 
+	// ========== TOAST HELPER ==========
 	function showToast(message: string, type: "success" | "danger" | "warning" | "info" = "success") {
 		toastMessage = message;
 		toastType = type;
 		toastVisible = true;
 	}
 
+	// ========== ADD EMPLOYEE ==========
 	function openAddModal() {
-		newName = "";
-		newEmail = "";
-		newDivision = "IT Engineering";
-		newRole = "Karyawan";
+		newEmployeeCode = "";
+		newFullName = "";
+		newPhone = "";
+		newDepartmentId = departments.length > 0 ? departments[0].id : undefined;
+		newRoleId = roles.length > 0 ? roles[0].id : undefined;
 		isAddModalOpen = true;
 	}
 
@@ -67,51 +130,109 @@
 	}
 
 	async function handleAddEmployee() {
-		if (!newName || !newEmail) {
-			showToast("Mohon isi Nama Lengkap dan Email perusahaan.", "warning");
+		if (!newEmployeeCode || !newFullName || !newPhone) {
+			showToast("Mohon isi Kode Karyawan, Nama Lengkap, dan No. Telepon.", "warning");
 			return;
 		}
 
 		isLoading = true;
-		
-		// Simulate API call
-		await new Promise(resolve => setTimeout(resolve, 800));
 
-		const newId = `EMP-00${employees.length + 1}`;
-		employees = [
-			...employees,
-			{
-				id: newId,
-				name: newName,
-				email: newEmail,
-				division: newDivision,
-				role: newRole,
-				status: "Aktif"
-			}
-		];
+		try {
+			const data: EmployeeCreateRequest = {
+				employee_code: newEmployeeCode,
+				full_name: newFullName,
+				no_phone: newPhone,
+				department_id: newDepartmentId,
+				role_id: newRoleId,
+			};
 
-		isLoading = false;
-		closeAddModal();
-		showToast(`Karyawan ${newName} berhasil ditambahkan!`, "success");
+			await createEmployee(data);
+			await loadEmployees();
+
+			closeAddModal();
+			showToast(`Karyawan ${newFullName} berhasil ditambahkan!`, "success");
+		} catch (err: any) {
+			showToast(err?.message || "Gagal menambahkan karyawan.", "danger");
+		} finally {
+			isLoading = false;
+		}
 	}
 
-	function confirmDelete(employee: any) {
+	// ========== EDIT EMPLOYEE ==========
+	function openEditModal(emp: Employee) {
+		editingEmployee = emp;
+		editEmployeeCode = emp.employeeCode;
+		editFullName = emp.fullName;
+		editEmail = emp.email ?? "";
+		editPhone = emp.phone ?? "";
+		// Find department_id and role_id by name
+		const dept = departments.find(d => d.departmentsName === emp.department);
+		editDepartmentId = dept ? dept.id : undefined;
+		const role = roles.find(r => r.role_name === emp.role);
+		editRoleId = role ? role.id : undefined;
+		editStatus = emp.status;
+		isEditModalOpen = true;
+	}
+
+	function closeEditModal() {
+		isEditModalOpen = false;
+		editingEmployee = null;
+	}
+
+	async function handleEditEmployee() {
+		if (!editingEmployee) return;
+		if (!editEmployeeCode || !editFullName || !editPhone) {
+			showToast("Mohon isi Kode Karyawan, Nama Lengkap, dan No. Telepon.", "warning");
+			return;
+		}
+
+		isLoading = true;
+
+		try {
+			const data: EmployeeUpdateRequest = {
+				employee_code: editEmployeeCode,
+				full_name: editFullName,
+				email: editEmail || undefined,
+				no_phone: editPhone,
+				department_id: editDepartmentId,
+				role_id: editRoleId,
+				status: editStatus,
+			};
+
+			await updateEmployee(editingEmployee.id, data);
+			await loadEmployees();
+
+			closeEditModal();
+			showToast(`Data karyawan ${editFullName} berhasil diperbarui!`, "success");
+		} catch (err: any) {
+			showToast(err?.message || "Gagal memperbarui data karyawan.", "danger");
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	// ========== DELETE EMPLOYEE ==========
+	function confirmDelete(employee: Employee) {
 		employeeToDelete = employee;
 		isDeleteModalOpen = true;
 	}
 
 	async function handleDelete() {
-		if (employeeToDelete) {
-			isLoading = true;
-			
-			// Simulate API call
-			await new Promise(resolve => setTimeout(resolve, 800));
+		if (!employeeToDelete) return;
 
-			employees = employees.filter(e => e.id !== employeeToDelete.id);
-			isLoading = false;
-			showToast(`Data karyawan ${employeeToDelete.name} berhasil dihapus.`, "success");
+		isLoading = true;
+
+		try {
+			await deleteEmployee(employeeToDelete.id);
+			await loadEmployees();
+
+			showToast(`Data karyawan ${employeeToDelete.fullName} berhasil dihapus.`, "success");
 			employeeToDelete = null;
 			isDeleteModalOpen = false;
+		} catch (err: any) {
+			showToast(err?.message || "Gagal menghapus data karyawan.", "danger");
+		} finally {
+			isLoading = false;
 		}
 	}
 </script>
@@ -145,11 +266,20 @@
 			</Button>
 		</div>
 	</div>
-
+	<Card padding="md">
 	<div class="filter-bar">
 		<div class="search-box">
-			<Input placeholder="Cari nama karyawan, email, atau divisi..." bind:value={searchQuery} />
+			<Input placeholder="Cari nama karyawan, email, atau kode karyawan..." bind:value={searchQuery} />
 		</div>
+		<div class="filter-item">
+				<label for="division-filter-select">Divisi:</label>
+				<select id="division-filter-select" bind:value={filterDivision} class="custom-select">
+					<option value="Semua">Semua Divisi</option>
+					{#each departments as dept}
+						<option value={dept.departmentsName}>{dept.departmentsName}</option>
+					{/each}
+				</select>
+			</div>
 		<div class="view-toggle">
 			<Button
 				variant={viewMode === 'grid' ? 'primary' : 'ghost'}
@@ -167,24 +297,33 @@
 			</Button>
 		</div>
 	</div>
+	</Card>
 
 	{#if viewMode === 'grid'}
-		<!-- Using EmployeeCard component -->
+		<!-- menggunakan EmployeeCard component -->
 		<div class="cards-grid">
 			{#each filteredEmployees as emp}
 				<EmployeeCard
-					name={emp.name}
-					email={emp.email}
-					position={emp.division}
-					status={emp.status}
+					name={emp.fullName}
+					email={emp.email ??"-" }
+					position={emp.department ?? " -"}
+					status={emp.status ?? "Nonaktif"}
 				>
-					<Button size="sm" variant="ghost">Edit</Button>
+					<Button size="sm" variant="ghost" onClick={() => openEditModal(emp)}>
+						<Pencil size={14} style="margin-right: 4px;" />
+						Edit
+					</Button>
 					<Button size="sm" variant="danger" onClick={() => confirmDelete(emp)}>Hapus</Button>
 				</EmployeeCard>
+			{:else}
+				<EmptyState
+					title="Tidak ada karyawan ditemukan"
+					description="Coba ubah kata kunci pencarian atau filter divisi."
+				/>
 			{/each}
 		</div>
 	{:else}
-		<!-- Using Card & Table UI components -->
+		<!-- Menggunakan Card & Table UI components -->
 		<Card padding="lg">
 			<Table hoverable striped bordered>
 				<thead>
@@ -192,6 +331,7 @@
 						<th>Karyawan</th>
 						<th>ID Karyawan</th>
 						<th>Divisi</th>
+						<th>Role</th>
 						<th>Status</th>
 						<th>Aksi</th>
 					</tr>
@@ -200,26 +340,39 @@
 					{#each filteredEmployees as emp}
 						<tr>
 							<td class="user-cell">
-								<Avatar name={emp.name} size={36} />
+								<Avatar name={emp.fullName} size={36} />
 								<div>
-									<div class="name">{emp.name}</div>
-									<div class="email">{emp.email}</div>
+									<div class="name">{emp.fullName}</div>
+									<div class="email">{emp.email ?? "-"}</div>
 								</div>
 							</td>
-							<td>{emp.id}</td>
-							<td>{emp.division}</td>
+							<td>{emp.employeeCode}</td>
+							<td>{emp.department ?? "-"}</td>
+							<td>{emp.role ?? "-"}</td>
 							<td>
-								<Badge variant={emp.status === 'Aktif' ? 'success' : 'danger'}>
+								<Badge variant={emp.status === 'Active' ? 'success' : emp.status === 'Inactive' ? 'warning' : 'danger'}>
 									{emp.status}
 								</Badge>
 							</td>
 							<td>
 								<div class="table-actions">
-									<Button size="sm" variant="ghost">Edit</Button>
+									<Button size="sm" variant="ghost" onClick={() => openEditModal(emp)}>
+										<Pencil size={14} style="margin-right: 4px;" />
+										Edit
+									</Button>
 									<Button size="sm" variant="danger" onClick={() => confirmDelete(emp)}>
 										<Trash2 size={16} />
 									</Button>
 								</div>
+							</td>
+						</tr>
+					{:else}
+						<tr>
+							<td colspan="6">
+								<EmptyState
+									title="Tidak ada karyawan ditemukan"
+									description="Coba ubah kata kunci pencarian atau filter divisi."
+								/>
 							</td>
 						</tr>
 					{/each}
@@ -232,25 +385,25 @@
 <!-- Modal Tambah Karyawan Baru -->
 <Modal open={isAddModalOpen} title="Tambah Karyawan Baru" onClose={closeAddModal}>
 	<form onsubmit={(e) => { e.preventDefault(); handleAddEmployee(); }} class="modal-form">
-		<Input label="Nama Lengkap" placeholder="Masukkan nama karyawan" bind:value={newName} required />
-		<Input label="Email Perusahaan" type="email" placeholder="contoh@company.com" bind:value={newEmail} required />
+		<Input label="Kode Karyawan" placeholder="Contoh: EMP-001" bind:value={newEmployeeCode} required />
+		<Input label="Nama Lengkap" placeholder="Masukkan nama karyawan" bind:value={newFullName} required />
+		<Input label="No. Telepon" placeholder="08xxxxxxxxxx" bind:value={newPhone} required />
 		
 		<div class="form-group">
-			<label for="division-select" class="form-label">Divisi</label>
-			<select id="division-select" bind:value={newDivision} class="form-select">
-				<option value="IT Engineering">IT Engineering</option>
-				<option value="Human Resources">Human Resources</option>
-				<option value="Marketing">Marketing</option>
-				<option value="Finance">Finance</option>
-				<option value="Operations">Operations</option>
+			<label for="add-division-select" class="form-label">Divisi</label>
+			<select id="add-division-select" bind:value={newDepartmentId} class="form-select">
+				{#each departments as dept}
+					<option value={dept.id}>{dept.departmentsName}</option>
+				{/each}
 			</select>
 		</div>
 
 		<div class="form-group">
-			<label for="role-select" class="form-label">Role Akses</label>
-			<select id="role-select" bind:value={newRole} class="form-select">
-				<option value="Karyawan">Karyawan</option>
-				<option value="Admin">Admin</option>
+			<label for="add-role-select" class="form-label">Role Akses</label>
+			<select id="add-role-select" bind:value={newRoleId} class="form-select">
+				{#each roles as role}
+					<option value={role.id}>{role.role_name}</option>
+				{/each}
 			</select>
 		</div>
 	</form>
@@ -264,13 +417,60 @@
 	{/snippet}
 </Modal>
 
+<!-- Modal Edit Karyawan -->
+<Modal open={isEditModalOpen} title="Edit Data Karyawan" onClose={closeEditModal}>
+	<form onsubmit={(e) => { e.preventDefault(); handleEditEmployee(); }} class="modal-form">
+		<Input label="Kode Karyawan" placeholder="Contoh: EMP-001" bind:value={editEmployeeCode} required />
+		<Input label="Nama Lengkap" placeholder="Masukkan nama karyawan" bind:value={editFullName} required />
+		<Input label="Email" type="email" placeholder="contoh@company.com" bind:value={editEmail} />
+		<Input label="No. Telepon" placeholder="08xxxxxxxxxx" bind:value={editPhone} required />
+		
+		<div class="form-group">
+			<label for="edit-division-select" class="form-label">Divisi</label>
+			<select id="edit-division-select" bind:value={editDepartmentId} class="form-select">
+				<option value={undefined}>-- Pilih Divisi --</option>
+				{#each departments as dept}
+					<option value={dept.id}>{dept.departmentsName}</option>
+				{/each}
+			</select>
+		</div>
+
+		<div class="form-group">
+			<label for="edit-role-select" class="form-label">Role Akses</label>
+			<select id="edit-role-select" bind:value={editRoleId} class="form-select">
+				<option value={undefined}>-- Pilih Role --</option>
+				{#each roles as role}
+					<option value={role.id}>{role.role_name}</option>
+				{/each}
+			</select>
+		</div>
+
+		<div class="form-group">
+			<label for="edit-status-select" class="form-label">Status</label>
+			<select id="edit-status-select" bind:value={editStatus} class="form-select">
+				<option value="Active">Active</option>
+				<option value="Inactive">Inactive</option>
+				<option value="Resigned">Resigned</option>
+			</select>
+		</div>
+	</form>
+
+	{#snippet footer()}
+		<Button variant="ghost" onClick={closeEditModal}>Batal</Button>
+		<Button onClick={handleEditEmployee}>
+			<Pencil size={18} style="margin-right: 6px;" />
+			Simpan Perubahan
+		</Button>
+	{/snippet}
+</Modal>
+
 <!-- Modal Konfirmasi Hapus -->
 <Modal open={isDeleteModalOpen} title="Konfirmasi Hapus Data" onClose={() => isDeleteModalOpen = false}>
 	<div class="delete-confirmation">
 		<div class="warning-icon">
 			<AlertTriangle size={48} color="var(--color-danger)" />
 		</div>
-		<p>Apakah Anda yakin ingin menghapus data karyawan <strong>{employeeToDelete?.name}</strong>?</p>
+		<p>Apakah Anda yakin ingin menghapus data karyawan <strong>{employeeToDelete?.fullName}</strong>?</p>
 		<p class="text-muted">Tindakan ini tidak dapat dibatalkan dan semua data yang terkait mungkin akan hilang.</p>
 	</div>
 
@@ -319,7 +519,35 @@
 
 	.search-box {
 		flex: 1;
-		max-width: 400px;
+		min-width: 400px;
+	}
+
+	.filter-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.filter-item label {
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: var(--color-text);
+		white-space: nowrap;
+	}
+
+	.custom-select{
+		padding: 0.6rem 0.8rem;
+		border-radius: var(--radius-md, 10px);
+		border: 1px solid var(--color-border);
+		background: var(--color-background);
+		color: var(--color-text);
+		font-size: 0.9rem;
+		outline: none;
+		transition: 0.2s;
+	}
+
+	.custom-select:focus {
+		border-color: var(--color-primary);
 	}
 
 	.view-toggle {

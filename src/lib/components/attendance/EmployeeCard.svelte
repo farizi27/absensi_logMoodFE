@@ -9,7 +9,7 @@
 		email?: string;
 		position?: string;
 		photo?: string;
-		status?: "Aktif" | "Nonaktif";
+		status?: string;
 		children?: Snippet;
 	}
 
@@ -21,6 +21,13 @@
 		status = "Aktif",
 		children
 	}: Props = $props();
+
+	function getStatusVariant(s: string): "success" | "warning" | "danger" {
+		const lower = s.toLowerCase();
+		if (lower === "aktif" || lower === "active") return "success";
+		if (lower === "nonaktif" || lower === "inactive") return "warning";
+		return "danger";
+	}
 </script>
 
 <Card hover border padding="md">
@@ -44,7 +51,7 @@
 
 			<div class="status">
 				<Badge
-					variant={status === "Aktif" ? "success" : "danger"}
+					variant={getStatusVariant(status)}
 				>
 					{status}
 				</Badge>
