@@ -1,8 +1,14 @@
 import { writable } from "svelte/store";
 
+export interface SidebarState {
+	collapsed: boolean;
+	mobileOpen: boolean;
+}
+
 function createSidebarStore() {
-	const { subscribe, set, update } = writable({
-		collapsed: false
+	const { subscribe, set, update } = writable<SidebarState>({
+		collapsed: false,
+		mobileOpen: false
 	});
 
 	return {
@@ -11,20 +17,46 @@ function createSidebarStore() {
 		toggle() {
 			update((state) => ({
 				...state,
-				collapsed: !state.collapsed
+				collapsed: !state.collapsed,
+				mobileOpen: !state.mobileOpen
+			}));
+		},
+
+		toggleMobile() {
+			update((state) => ({
+				...state,
+				mobileOpen: !state.mobileOpen
+			}));
+		},
+
+		openMobile() {
+			update((state) => ({
+				...state,
+				mobileOpen: true
+			}));
+		},
+
+		closeMobile() {
+			update((state) => ({
+				...state,
+				mobileOpen: false
 			}));
 		},
 
 		open() {
-			set({
-				collapsed: false
-			});
+			update((state) => ({
+				...state,
+				collapsed: false,
+				mobileOpen: true
+			}));
 		},
 
 		close() {
-			set({
-				collapsed: true
-			});
+			update((state) => ({
+				...state,
+				collapsed: true,
+				mobileOpen: false
+			}));
 		}
 	};
 }

@@ -60,11 +60,6 @@ export const adminNavigation: NavigationGroup[] = [
 				label: "Divisi",
 				href: "/admin/divisi",
 				icon: Building2
-			},
-			{
-				label: "Jadwal Kerja",
-				href: "/admin/jadwal-kerja",
-				icon: CalendarDays
 			}
 		]
 	},

@@ -21,6 +21,17 @@ export function login(data: LoginRequest) {
 }
 
 /* ===========================
+   REGISTER
+=========================== */
+
+export function register(data: any) {
+	return post<LoginResponse>(
+		"/auth/register",
+		data
+	);
+}
+
+/* ===========================
    PROFILE
 =========================== */
 
