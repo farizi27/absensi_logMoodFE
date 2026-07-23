@@ -152,7 +152,7 @@
 			left: 0;
 			height: 100vh;
 			width: 280px !important;
-			z-index: 1000; /* Placed in front of everything */
+			z-index: 1000; /* selalu di depan */
 			transform: translateX(-100%);
 			box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 		}

@@ -30,13 +30,13 @@ async function request<T>(
 	});
 
 	if (!response.ok) {
-		let message = "Terjadi kesalahan.";
+		let message = `Error ${response.status}: ${response.statusText}`;
 
 		try {
 			const error = await response.json();
 			message = error.message ?? message;
 		} catch {
-			// Abaikan jika respons bukan JSON
+			// Response bukan JSON (e.g. sendStatus(401))
 		}
 
 		throw {
@@ -95,4 +95,71 @@ export function del<T>(endpoint: string) {
 	return request<T>(endpoint, {
 		method: "DELETE"
 	});
+}
+
+// --- Form Data helpers (for multer endpoints) ---
+
+async function requestFormData<T>(
+	endpoint: string,
+	method: string,
+	data: Record<string, string>
+): Promise<T> {
+	const token =
+		typeof localStorage !== "undefined"
+			? localStorage.getItem("token")
+			: null;
+
+	const formData = new FormData();
+	for (const [key, value] of Object.entries(data)) {
+		formData.append(key, value);
+	}
+
+	const headers = new Headers();
+	// Do NOT set Content-Type — browser sets it with boundary for FormData
+	if (token) {
+		headers.set("Authorization", `Bearer ${token}`);
+	}
+
+	const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+		method,
+		headers,
+		body: formData
+	});
+
+	if (!response.ok) {
+		let message = `Error ${response.status}: ${response.statusText}`;
+
+		try {
+			const error = await response.json();
+			message = error.message ?? message;
+		} catch {
+			// Response bukan JSON (e.g. sendStatus(401))
+		}
+
+		throw {
+			message,
+			status: response.status
+		} satisfies ApiError;
+	}
+
+	if (response.status === 204) {
+		return undefined as T;
+	}
+
+	return response.json();
+}
+
+
+export function postForm<T>(
+	endpoint: string,
+	data: Record<string, string>
+) {
+	return requestFormData<T>(endpoint, "POST", data);
+}
+
+export function putForm<T>(
+	endpoint: string,
+	data: Record<string, string>
+) {
+	return requestFormData<T>(endpoint, "PUT", data);
 }

@@ -32,17 +32,11 @@
 </script>
 <svelte:window onkeydown={handleKeydown} />
 {#if open}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
         class="backdrop"
         onclick={(e) => {
             if (e.target === e.currentTarget) {
-                close();
-            }
-        }}
-        role="button"
-        tabindex="0"
-        onkeydown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
                 close();
             }
         }}

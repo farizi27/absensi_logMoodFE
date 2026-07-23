@@ -5,28 +5,35 @@
     import Button from '$lib/components/ui/Button.svelte';
     import {login} from '$lib/services/auth.service';
     import {goto} from '$app/navigation';
+    import { get } from "svelte/store";
 
     let email = $state('');
     let password = $state('');
 
     async function handleLogin() {
-        try{
-            const result = await login({
-                email: email,
-                password: password
-            });
-            auth.login(result.user,result.token);
-            console.log('Login successful:', result);
-            if (result.user.role === 'admin') {
-                goto('/admin/dashboard');
-            } else {
-                goto('/karyawan/dashboard');
-            }
-        } catch (error) {
-            const err = 'Login gagal. Silakan coba lagi.';
-            console.error(err, error);
+    try {
+        console.log("ini bisa")
+        const result = await login({
+            email,
+            password
+        });
+
+        auth.login(result.token);
+
+        const role = get(auth).user?.role;
+
+        console.log("Role:", role);
+
+        if (role === 1) {
+            goto("/admin/dashboard");
+        } else {
+            goto("/karyawan/dashboard");
         }
+
+    } catch (error) {
+        console.error("Login gagal.", error);
     }
+}
 </script>
 
 <svelte:head>

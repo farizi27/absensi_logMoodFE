@@ -1,86 +1,116 @@
-// src/lib/stores/auth.ts
-
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
+import { jwtDecode } from "jwt-decode";
 
 interface User {
-	id: string;
+    id: number;
+    email: string | null;
+    role: 1 | 2;
 	name: string;
-	email: string;
-	role: "admin" | "karyawan";
+}
 
-	photo?: string;
+interface JwtPayload {
+    id: number;
+    email: string | null;
+    role: 1 | 2;
+	name: string,
+    iat: number;
+    exp: number;
 }
 
 interface AuthState {
-	user: User | null;
-	token: string | null;
-	isAuthenticated: boolean;
+    user: User | null;
+    token: string | null;
+    isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
-	user: null,
-	token: null,
-	isAuthenticated: false
+    user: null,
+    token: null,
+    isAuthenticated: false
 };
 
 function createAuthStore() {
-	const { subscribe, set, update } = writable<AuthState>(initialState);
+    const { subscribe, set, update } = writable<AuthState>(initialState);
 
-	return {
+    return {
+        subscribe,
 
-		subscribe,
+        login(token: string) {
+            const payload = jwtDecode<JwtPayload>(token);
 
-		login(user: User, token: string) {
+            localStorage.setItem("token", token);
 
-			localStorage.setItem("token", token);
+            set({
+                token,
+                isAuthenticated: true,
+                user: {
+                    id: payload.id,
+                    email: payload.email,
+					name: payload.name,
+                    role: payload.role
+                }
+            });
+        },
+		loadFromStorage() {
+			const token = localStorage.getItem("token");
 
-			set({
-				user,
-				token,
-				isAuthenticated: true
-			});
+			if (!token) return;
 
+			try {
+				const payload = jwtDecode<JwtPayload>(token);
+
+				set({
+					token,
+					isAuthenticated: true,
+					user: {
+						id: payload.id,
+						name: payload.name,
+						email: payload.email,
+						role: payload.role
+					}
+				});
+			} catch (error) {
+				localStorage.removeItem("token");
+				set(initialState);
+			}
 		},
 
-		logout() {
+        logout() {
+            localStorage.removeItem("token");
+            set(initialState);
+        },
 
-			localStorage.removeItem("token");
+        setUser(user: User) {
+            update(state => ({
+                ...state,
+                user
+            }));
+        },
 
-			set(initialState);
+        setToken(token: string) {
+            localStorage.setItem("token", token);
 
-		},
+            update(state => ({
+                ...state,
+                token,
+                isAuthenticated: true
+            }));
+        },
 
-		setUser(user: User) {
+        reset() {
+            localStorage.removeItem("token");
+            set(initialState);
+        },
 
-			update(state => ({
-				...state,
-				user
-			}));
+        isAdmin() {
+            return get({ subscribe }).user?.role === 1;
+        },
 
-		},
-
-		setToken(token: string) {
-
-			localStorage.setItem("token", token);
-
-			update(state => ({
-				...state,
-				token,
-				isAuthenticated: true
-			}));
-
-		},
-
-		reset() {
-
-			localStorage.removeItem("token");
-
-			set(initialState);
-
-		}
-
-	};
-
+        isEmployee() {
+            return get({ subscribe }).user?.role === 2;
+        }
+    };
 }
+
 
 export const auth = createAuthStore();

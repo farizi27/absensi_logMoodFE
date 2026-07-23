@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import { Inbox } from "@lucide/svelte";
 
 	interface Props {
 		title?: string;
@@ -18,11 +19,13 @@
 
 <div class="empty-state">
 
-	{#if icon}
-		<div class="icon">
+	<div class="icon">
+		{#if icon}
 			{@render icon()}
-		</div>
-	{/if}
+		{:else}
+			<Inbox size={36} strokeWidth={1.5} />
+		{/if}
+	</div>
 
 	<h3>{title}</h3>
 

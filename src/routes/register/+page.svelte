@@ -6,6 +6,7 @@
     import {register} from '$lib/services/auth.service';
     import {goto} from '$app/navigation';
 
+    let full_name = $state('')
     let name = $state('');
     let email = $state('');
     let password = $state('');
@@ -13,17 +14,13 @@
     async function handleRegister() {
         try{
             const result = await register({
+                full_name: full_name,
                 name: name,
                 email: email,
                 password: password
             });
-            auth.login(result.user,result.token);
+            goto("/login")
             console.log('Registration successful:', result);
-            if (result.user.role === 'admin') {
-                goto('/admin/dashboard');
-            } else {
-                goto('/karyawan/dashboard');
-            }
         } catch (error) {
             const err = 'Pendaftaran gagal. Silakan coba lagi.';
             console.error(err, error);
@@ -49,10 +46,15 @@
             <form class="login-form" onsubmit={(e) => { e.preventDefault(); handleRegister(); }}>
                 <div class="inputs-container">
                     <Input
+                        label="Full Name"
+                        placeholder="Masukkan nama"
+                        bind:value={full_name}
+                    />
+
+                    <Input
                         label="Nama"
                         placeholder="Masukkan nama"
                         bind:value={name}
-                        error={name && name.length < 2 ? 'Nama harus memiliki minimal 2 karakter' : ''}
                     />
 
                     <Input

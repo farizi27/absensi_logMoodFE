@@ -1,45 +1,36 @@
-export type Gender = "L" | "P";
-
+// src/lib/types/employee.ts
 export interface Employee {
-	id: string;
-
-	name: string;
-	email: string;
-
-	phone?: string;
-
-	address?: string;
-
-	gender: Gender;
-
-	divisionId: string;
-	divisionName?: string;
-
-	position: string;
-
-	photo?: string;
-
-	isActive: boolean;
-
-	createdAt?: string;
-	updatedAt?: string;
+	id: number;
+	employeeCode: string;
+	fullName: string;
+	email: string | null;
+	phone: string;
+	department: string | null;
+	role: string | null;
+	status: string;
+	photo: string | null;
 }
 
-export interface EmployeeRequest {
-	name: string;
-	email: string;
+export interface EmployeeResponse {
+	success: boolean;
+	message: string;
+	data: Employee[];
+}
 
-	phone?: string;
+export interface EmployeeCreateRequest {
+	employee_code: string;
+	full_name: string;
+	no_phone: string;
+	department_id?: number;
+	role_id?: number;
+}
 
-	address?: string;
-
-	gender: Gender;
-
-	divisionId: string;
-
-	position: string;
-
-	password?: string;
-
-	photo?: string;
+export interface EmployeeUpdateRequest {
+	employee_code: string;
+	full_name: string;
+	email?: string;
+	no_phone: string;
+	department_id?: number;
+	role_id?: number;
+	status?: string;
 }

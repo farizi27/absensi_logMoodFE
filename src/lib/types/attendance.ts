@@ -1,32 +1,24 @@
 // src/lib/types/attendance.ts
 
-export interface Attendance {
-	id: string;
+export interface AttendanceLog {
+	id: number;
+	employeeId: number;
+	employeeName: string | null;
+	departmentName: string | null;
+	attendanceDate: string;
+	checkIn: string | null;
+	checkOut: string | null;
+	workingHours: string | null;
+	attendanceStatus: "present" | "late" | "absent" | string;
+	createdAt: string;
+}
 
-	employeeId: string;
-	employeeName: string;
-
-	date: string;
-
-	checkIn?: string;
-	checkOut?: string;
-
-	status: "present" | "late" | "absent" | "leave";
-
-	mood?: string;
-
-	notes?: string;
+export interface AttendanceResponse {
+	success: boolean;
+	data: AttendanceLog[];
 }
 
 export interface AttendanceRequest {
-	mood?: string;
-	notes?: string;
-}
-
-export interface AttendanceStatistic {
-	totalEmployee: number;
-	present: number;
-	late: number;
-	absent: number;
-	leave: number;
+	latitude: number;
+	longitude: number;
 }

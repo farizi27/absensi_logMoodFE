@@ -1,10 +1,12 @@
 // src/lib/services/auth.service.ts
 
-import { get, post } from "./api";
+import { get, post, put } from "./api";
 
 import type {
     LoginRequest,
     LoginResponse,
+	RegisterRequest,
+	RegisterResponse,
     User,
     ChangePasswordRequest
 } from "$lib/types/auth";
@@ -24,8 +26,8 @@ export function login(data: LoginRequest) {
    REGISTER
 =========================== */
 
-export function register(data: any) {
-	return post<LoginResponse>(
+export function register(data: RegisterRequest) {
+	return post<RegisterResponse>(
 		"/auth/register",
 		data
 	);
@@ -48,30 +50,8 @@ export function getProfile() {
 export function changePassword(
 	data: ChangePasswordRequest
 ) {
-	return post<void>(
+	return put<void>(
 		"/auth/change-password",
 		data
-	);
-}
-
-/* ===========================
-   REFRESH TOKEN
-=========================== */
-
-export function refreshToken() {
-	return post<LoginResponse>(
-		"/auth/refresh",
-		{}
-	);
-}
-
-/* ===========================
-   LOGOUT
-=========================== */
-
-export function logout() {
-	return post<void>(
-		"/auth/logout",
-		{}
 	);
 }

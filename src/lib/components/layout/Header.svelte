@@ -3,7 +3,6 @@
 	import { Menu, Power, Sun, Moon } from "@lucide/svelte";
 	import { auth } from "$lib/stores/auth";
 	import { theme } from "$lib/stores/theme";
-	import { logout } from "$lib/services/auth.service";
 	import { goto } from "$app/navigation";
 	import Avatar from "../ui/Avatar.svelte";
 
@@ -17,15 +16,9 @@
 		children
 	}: Props = $props();
 
-	async function handleLogout() {
-		try {
-			await logout();
-		} catch (error) {
-			console.error("Logout error:", error);
-		} finally {
-			auth.logout();
-			goto("/login");
-		}
+	function handleLogout() {
+		auth.logout();
+		goto("/login");
 	}
 </script>
 
@@ -43,8 +36,8 @@
 
 	<div class="right">
 		<div class="user-info">
-			<Avatar name={$auth.user?.name ?? "Ahmad Farizi"} size="sm"/>
-			<span class="name">{$auth.user?.name ?? "Ahmad Farizi"}</span>
+			<Avatar name={$auth.user?.name} size="sm"/>
+			<span class="name">{$auth.user?.name}</span>
 		</div>
 
 		{@render children?.()}
