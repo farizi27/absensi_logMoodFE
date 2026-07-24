@@ -50,8 +50,15 @@ export function getProfile() {
 export function changePassword(
 	data: ChangePasswordRequest
 ) {
-	return put<void>(
+	return put<{ success: boolean; message: string }>(
 		"/auth/change-password",
+		data
+	);
+}
+
+export function updateProfile(data: { name: string }) {
+	return put<{ success: boolean; message: string }>(
+		"/auth/update-profile",
 		data
 	);
 }

@@ -21,7 +21,7 @@ export function getEmployees() {
 =========================== */
 
 export function getEmployee(id: number) {
-	return get<Employee>(`/employees/${id}`);
+	return get<{ success: boolean; data: Employee }>(`/employees/${id}`);
 }
 
 /* ===========================

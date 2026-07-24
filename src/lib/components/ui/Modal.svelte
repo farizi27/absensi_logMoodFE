@@ -94,6 +94,11 @@
 		box-shadow: var(--shadow-lg);
 
 		overflow: hidden;
+		overflow-y: auto;
+		scrollbar-width: none;
+
+		/* IE & Edge lama */
+		-ms-overflow-style: none;
 
 		animation: slide-up .25s ease;
 	}

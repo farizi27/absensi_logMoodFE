@@ -20,18 +20,18 @@
 
 	// State for Add Modal
 	let isAddModalOpen = $state(false);
-	let newDivName = $state("");
-	let newDivDesc = $state("");
+	let newDeptName = $state("");
+	let newDeptDesc = $state("");
 
 	// State for Edit Modal
 	let isEditModalOpen = $state(false);
-	let editDivId = $state<number | null>(null);
-	let editDivName = $state("");
-	let editDivDesc = $state("");
+	let editDeptId = $state<number | null>(null);
+	let editDeptName = $state("");
+	let editDeptDesc = $state("");
 
 	// State for Delete Modal
 	let isDeleteModalOpen = $state(false);
-	let divToDelete = $state<any>(null);
+	let deptToDelete = $state<any>(null);
 
 	// State for Toast Notification
 	let toastVisible = $state(false);
@@ -50,8 +50,8 @@
 	}
 
 	function openAddModal() {
-		newDivName = "";
-		newDivDesc = "";
+		newDeptName = "";
+		newDeptDesc = "";
 		isAddModalOpen = true;
 	}
 
@@ -60,15 +60,15 @@
 	}
 
 	function openEditModal(department: Department) {
-		editDivId = department.id;
-		editDivName = department.departmentsName;
-		editDivDesc = department.description;
+		editDeptId = department.id;
+		editDeptName = department.departmentsName;
+		editDeptDesc = department.description;
 		isEditModalOpen = true;
 	}
 
 	function closeEditModal() {
 		isEditModalOpen = false;
-		editDivId = null;
+		editDeptId = null;
 	}
 
 	async function loadDepartments() {
@@ -94,7 +94,7 @@
 
 	async function handleAddDepartment() {
 
-		if (!newDivName || !newDivDesc) {
+		if (!newDeptName || !newDeptDesc) {
 
 			showToast(
 				"Nama Department dan Deskripsi wajib diisi",
@@ -109,8 +109,8 @@
 			isLoading = true;
 
 			await createDepartment({
-				departmentsName: newDivName,
-				description: newDivDesc
+				departmentsName: newDeptName,
+				description: newDeptDesc
 			});
 
 			await loadDepartments();
@@ -141,9 +141,9 @@
 
 	async function handleEditDepartment() {
 
-		if (!editDivId) return;
+		if (!editDeptId) return;
 
-		if (!editDivName || !editDivDesc) {
+		if (!editDeptName || !editDeptDesc) {
 
 			showToast(
 				"Nama Department dan Deskripsi wajib diisi",
@@ -157,9 +157,9 @@
 
 			isLoading = true;
 
-			await updateDepartment(editDivId, {
-				departmentsName: editDivName,
-				description: editDivDesc
+			await updateDepartment(editDeptId, {
+				departmentsName: editDeptName,
+				description: editDeptDesc
 			});
 
 			await loadDepartments();
@@ -189,19 +189,19 @@
 	}
 
 	function confirmDelete(div: any) {
-		divToDelete = div;
+		deptToDelete = div;
 		isDeleteModalOpen = true;
 	}
 
 	async function handleDelete() {
 
-		if (!divToDelete) return;
+		if (!deptToDelete) return;
 
 		try {
 
 			isLoading = true;
 
-			await deleteDepartment(divToDelete.id);
+			await deleteDepartment(deptToDelete.id);
 
 			await loadDepartments();
 
@@ -211,7 +211,7 @@
 			);
 
 			isDeleteModalOpen = false;
-			divToDelete = null;
+			deptToDelete = null;
 
 		} catch (error: any) {
 
@@ -250,7 +250,7 @@
 <div class="page-container">
 	<div class="header-action">
 		<div>
-			<h1>Data Divisi</h1>
+			<h1>Data Department</h1>
 			<p>Kelola daftar department dan alokasi karyawan.</p>
 		</div>
 		<Button onClick={openAddModal}>
@@ -260,7 +260,7 @@
 	</div>
 
 	<!-- Using Card UI Component -->
-	<div class="divisions-grid">
+	<div class="departmentons-grid">
 		{#each departments as department}
 			<Card hover border padding="lg">
 				<div class="card-head">
@@ -268,10 +268,10 @@
 						<Building2 size={24}/>
 					</div>
 				</div>
-				<h3 class="div-title">
+				<h3 class="dept-title">
 					{department.departmentsName}
 				</h3>
-				<p class="div-desc">
+				<p class="dept-desc">
 					{department.description}
 				</p>
 				<div class="card-footer">
@@ -298,11 +298,11 @@
 	</div>
 </div>
 
-<!-- Modal Tambah Divisi Baru -->
-<Modal open={isAddModalOpen} title="Tambah Divisi Baru" onClose={closeAddModal}>
+<!-- Modal Tambah Department Baru -->
+<Modal open={isAddModalOpen} title="Tambah Department Baru" onClose={closeAddModal}>
 	<form onsubmit={(e) => { e.preventDefault(); handleAddDepartment(); }} class="modal-form">
-		<Input label="Nama Department" placeholder="Contoh: Quality Assurance" bind:value={newDivName} required />
-		<Input label="Deskripsi Department" placeholder="Jelaskan peran divisi ini..." bind:value={newDivDesc} />
+		<Input label="Nama Department" placeholder="Contoh: Quality Assurance" bind:value={newDeptName} required />
+		<Input label="Deskripsi Department" placeholder="Jelaskan peran department ini..." bind:value={newDeptDesc} />
 	</form>
 
 	{#snippet footer()}
@@ -314,11 +314,11 @@
 	{/snippet}
 </Modal>
 
-<!-- Modal Edit Divisi -->
+<!-- Modal Edit Department -->
 <Modal open={isEditModalOpen} title="Edit Department" onClose={closeEditModal}>
 	<form onsubmit={(e) => { e.preventDefault(); handleEditDepartment(); }} class="modal-form">
-		<Input label="Nama Department" placeholder="Contoh: Quality Assurance" bind:value={editDivName} required />
-		<Input label="Deskripsi Department" placeholder="Jelaskan peran divisi ini..." bind:value={editDivDesc} />
+		<Input label="Nama Department" placeholder="Contoh: Quality Assurance" bind:value={editDeptName} required />
+		<Input label="Deskripsi Department" placeholder="Jelaskan peran department ini..." bind:value={editDeptDesc} />
 	</form>
 
 	{#snippet footer()}
@@ -336,7 +336,7 @@
 		<div class="warning-icon">
 			<AlertTriangle size={48} color="var(--color-danger)" />
 		</div>
-		<p>Apakah Anda yakin ingin menghapus department <strong>{divToDelete?.departmentsName}</strong>?</p>
+		<p>Apakah Anda yakin ingin menghapus department <strong>{deptToDelete?.departmentsName}</strong>?</p>
 		<p class="text-muted">Semua data terkait department ini akan ikut terhapus.</p>
 	</div>
 
@@ -375,7 +375,7 @@
 		font-size: 0.95rem;
 	}
 
-	.divisions-grid {
+	.departmentons-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 		gap: 1.25rem;
@@ -399,14 +399,14 @@
 		justify-content: center;
 	}
 
-	.div-title {
+	.dept-title {
 		font-size: 1.2rem;
 		font-weight: 600;
 		color: var(--color-text);
 		margin: 0 0 0.5rem 0;
 	}
 
-	.div-desc {
+	.dept-desc {
 		font-size: 0.875rem;
 		color: var(--color-text-light);
 		margin: 0 0 1rem 0;

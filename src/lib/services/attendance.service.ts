@@ -1,11 +1,11 @@
 // src/lib/services/attendance.service.ts
 
-import { del, get, post, put } from "./api";
+import { del, get, post, put, getBlob } from "./api";
 
 import type {
 	AttendanceLog,
 	AttendanceResponse,
-	AttendanceRequest
+	AttendanceRequest,
 } from "$lib/types/attendance";
 
 /* ===========================
@@ -14,6 +14,31 @@ import type {
 
 export function getAllAttendanceLogs() {
 	return get<AttendanceResponse>("/attedanceLogs");
+}
+
+export async function exportMonthlyAttendanceExcel(
+	employeeId?: number,
+	month?: number,
+	year?: number
+) {
+	const params = new URLSearchParams();
+
+	const today = new Date();
+	const m = month || (today.getMonth() + 1);
+	const y = year || today.getFullYear();
+
+	params.append("month", String(m));
+	params.append("year", String(y));
+
+	if (employeeId) {
+		params.append("employeeId", String(employeeId));
+	}
+
+	const query = params.toString();
+
+	return getBlob(
+		`/attedanceLogs/report-monthly?${query}`
+	);
 }
 
 /* ===========================
@@ -44,4 +69,20 @@ export function checkOut(data: AttendanceRequest) {
 		"/attedanceLogs/check-out",
 		data
 	);
+}
+
+export async function exportDepartmentMonthlyExcel(
+	month?: number,
+	year?: number
+) {
+	const params = new URLSearchParams();
+
+	const today = new Date();
+	const m = month || (today.getMonth() + 1);
+	const y = year || today.getFullYear();
+
+	params.append("month", String(m));
+	params.append("year", String(y));
+
+	return getBlob(`/attedanceLogs/report-monthly-departments?${params.toString()}`);
 }

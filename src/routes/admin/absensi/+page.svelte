@@ -223,9 +223,9 @@
 			</div>
 
 			<div class="filter-item">
-				<label for="division-select">Divisi:</label>
+				<label for="division-select">Department:</label>
 				<select id="division-select" bind:value={filterDivision} class="custom-select">
-					<option value="Semua">Semua Divisi</option>
+					<option value="Semua">Semua Department</option>
 					{#each departments as dept}
 						<option value={dept.departmentsName}>{dept.departmentsName}</option>
 					{/each}
@@ -247,7 +247,7 @@
 				<tr>
 					<th>Selfie</th>
 					<th>Nama Karyawan</th>
-					<th>Divisi</th>
+					<th>Department</th>
 					<th>Tanggal</th>
 					<th>Jam Masuk</th>
 					<th>Jam Keluar</th>

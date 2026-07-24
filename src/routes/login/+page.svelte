@@ -11,29 +11,30 @@
     let password = $state('');
 
     async function handleLogin() {
-    try {
-        console.log("ini bisa")
-        const result = await login({
-            email,
-            password
-        });
+        try {
+            console.log("ini bisa")
+            const result = await login({
+                email,
+                password
+            });
 
-        auth.login(result.token);
+            auth.login(result.token);
 
-        const role = get(auth).user?.role;
+            const role = get(auth).user?.role;
 
-        console.log("Role:", role);
+            console.log("Role:", role);
 
-        if (role === 1) {
-            goto("/admin/dashboard");
-        } else {
-            goto("/karyawan/dashboard");
+            if (role === 1) {
+                goto("/admin/dashboard");
+            } else {
+                goto("/karyawan/dashboard");
+            }
+
+        } catch (error) {
+            console.error("Login gagal.", error);
         }
-
-    } catch (error) {
-        console.error("Login gagal.", error);
     }
-}
+
 </script>
 
 <svelte:head>

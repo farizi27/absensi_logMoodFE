@@ -1,6 +1,6 @@
 // src/lib/services/mood.service.ts
 
-import { del, get, post, put } from "./api";
+import { del, get, post, put, getBlob } from "./api";
 
 import type {
 	MoodJournal,
@@ -53,4 +53,20 @@ export function deleteMoodJournal(id: number) {
 	return del<{ success: boolean; message: string }>(
 		`/moodJournals/${id}`
 	);
+}
+
+export function exportMonthlyMoodExcel(
+	month?: number,
+	year?: number
+) {
+	const params = new URLSearchParams();
+
+	const today = new Date();
+	const m = month || (today.getMonth() + 1);
+	const y = year || today.getFullYear();
+
+	params.append("month", String(m));
+	params.append("year", String(y));
+
+	return getBlob(`/moodJournals/mood-monthly?${params.toString()}`);
 }

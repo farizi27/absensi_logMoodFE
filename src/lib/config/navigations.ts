@@ -58,7 +58,7 @@ export const adminNavigation: NavigationGroup[] = [
 				icon: Users
 			},
 			{
-				label: "Divisi",
+				label: "Department",
 				href: "/admin/divisi",
 				icon: Building2
 			},

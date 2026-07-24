@@ -5,7 +5,7 @@
 		type?: HTMLInputElement['type'];
 		placeholder?: string;
 		name?: string;
-		value?: string;
+		value?: string | number | undefined;
 		required?: boolean;
 		disabled?: boolean;
 		error?: string;
@@ -19,7 +19,7 @@
 		type = 'text',
 		placeholder = '',
 		name = '',
-		value = $bindable(''),
+		value = $bindable(),
 		required = false,
 		disabled = false,
 		error = '',

@@ -52,28 +52,36 @@ function createAuthStore() {
             });
         },
 		loadFromStorage() {
-			const token = localStorage.getItem("token");
+            const token = localStorage.getItem("token");
 
-			if (!token) return;
+            if (!token) return;
 
-			try {
-				const payload = jwtDecode<JwtPayload>(token);
+            try {
+                const payload = jwtDecode<JwtPayload>(token);
 
-				set({
-					token,
-					isAuthenticated: true,
-					user: {
-						id: payload.id,
-						name: payload.name,
-						email: payload.email,
-						role: payload.role
-					}
-				});
-			} catch (error) {
-				localStorage.removeItem("token");
-				set(initialState);
-			}
-		},
+                const now = Math.floor(Date.now() / 1000);
+
+                if (payload.exp < now) {
+                    localStorage.removeItem("token");
+                    set(initialState);
+                    return;
+                }
+
+                set({
+                    token,
+                    isAuthenticated: true,
+                    user: {
+                        id: payload.id,
+                        name: payload.name,
+                        email: payload.email,
+                        role: payload.role
+                    }
+                });
+            } catch {
+                localStorage.removeItem("token");
+                set(initialState);
+            }
+        },
 
         logout() {
             localStorage.removeItem("token");

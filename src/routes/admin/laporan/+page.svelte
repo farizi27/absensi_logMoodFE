@@ -2,18 +2,109 @@
 	import Card from "$lib/components/ui/Card.svelte";
 	import Button from "$lib/components/ui/Button.svelte";
 	import Badge from "$lib/components/ui/Badge.svelte";
+	import Toast from "$lib/components/ui/Toast.svelte";
+	import { exportMonthlyAttendanceExcel, exportDepartmentMonthlyExcel } from "$lib/services/attendance.service"
+	import { exportMonthlyMoodExcel } from "$lib/services/mood.service"
 	import { FileSpreadsheet, FileText, Printer, Download } from "@lucide/svelte";
-
+	
 	const reportOptions = [
 		{ title: "Laporan Kehadiran Bulanan", desc: "Rekap persentase kehadiran, ketepatan waktu, dan izin karyawan.", icon: FileSpreadsheet, badge: "PDF & Excel" },
 		{ title: "Laporan Mood & Stres Kerja", desc: "Analisis distribusi tingkat kebahagiaan dan beban emosional karyawan.", icon: FileText, badge: "PDF" },
 		{ title: "Laporan Per Divisi", desc: "Perbandingan performa presensi dan mood berdasarkan departemen.", icon: Printer, badge: "Excel" }
 	];
+
+	// Toast
+	let toastVisible = $state(false);
+	let toastMessage = $state("");
+	let toastType = $state<"success" | "danger" | "warning" | "info">("success");
+	function showToast(message: string, type: "success" | "danger" | "warning" | "info" = "success") {
+		toastMessage = message;
+		toastType = type;
+		toastVisible = true;
+	}
+	async function exportExcel() {
+	try {
+		const blob = await exportMonthlyAttendanceExcel();
+		const url = URL.createObjectURL(blob);
+
+		const link = document.createElement("a");
+		link.href = url;
+
+		const today = new Date();
+
+		link.download = `Attendance-${
+			today.getMonth() + 1
+		}-${today.getFullYear()}.xlsx`;
+
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
+		showToast("Export berhasil.", "success");
+		} catch (err: any) {
+			showToast(err.message || "Gagal export.", "danger");
+		}
+	}
+
+	async function exportMoodExcel() {
+	try {
+		const blob = await exportMonthlyMoodExcel();
+		const url = URL.createObjectURL(blob);
+
+		const link = document.createElement("a");
+		link.href = url;
+
+		const today = new Date();
+
+		link.download = `Mood-${
+			today.getMonth() + 1
+		}-${today.getFullYear()}.xlsx`;
+
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
+		showToast("Export berhasil.", "success");
+		} catch (err: any) {
+			showToast(err.message || "Gagal export.", "danger");
+		}
+	}
+
+	async function exportDepartmentExcel() {
+	try {
+		const blob = await exportDepartmentMonthlyExcel();
+		const url = URL.createObjectURL(blob);
+
+		const link = document.createElement("a");
+		link.href = url;
+
+		const today = new Date();
+
+		link.download = `Department-Attendance-${
+			today.getMonth() + 1
+		}-${today.getFullYear()}.xlsx`;
+
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
+		showToast("Export berhasil.", "success");
+		} catch (err: any) {
+			showToast(err.message || "Gagal export.", "danger");
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>Laporan & Rekapitulasi - Admin</title>
 </svelte:head>
+
+<Toast 
+	visible={toastVisible} 
+	message={toastMessage} 
+	type={toastType} 
+	onClose={() => toastVisible = false} 
+/>
 
 <div class="page-container">
 	<div class="header-action">
@@ -36,10 +127,22 @@
 				<h3 class="report-title">{r.title}</h3>
 				<p class="report-desc">{r.desc}</p>
 				<div class="card-footer">
-					<Button size="sm" onClick={() => alert(`Mengunduh ${r.title}...`)}>
+					{#if r.title ==="Laporan Kehadiran Bulanan"}
+					<Button size="sm" onClick={exportExcel}>
 						<Download size={16} style="margin-right: 6px;" />
 						Export Laporan
 					</Button>
+					{:else if r.title === "Laporan Mood & Stres Kerja"}
+					<Button size="sm" onClick={exportMoodExcel}>
+						<Download size={16} style="margin-right: 6px;" />
+						Export Laporan
+					</Button>
+					{:else if r.title === "Laporan Per Divisi"}
+					<Button size="sm" onClick={exportDepartmentExcel}>
+						<Download size={16} style="margin-right: 6px;" />
+						Export Laporan
+					</Button>
+					{/if}
 				</div>
 			</Card>
 		{/each}
