@@ -83,6 +83,9 @@
 	.modal {
 		width: 100%;
 		max-width: 520px;
+		max-height: 80vh;
+		display: flex;
+		flex-direction: column;
 
 		background: var(--color-surface);
 		border-radius: var(--radius-lg);

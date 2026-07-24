@@ -15,11 +15,15 @@
 	import { getEmployees, createEmployee, updateEmployee, deleteEmployee } from "$lib/services/employe.service";
 	import { get } from "$lib/services/api";
 	import type { Employee, EmployeeCreateRequest, EmployeeUpdateRequest } from "$lib/types/employee";
+	import {getWorkSchedules} from "$lib/services/workSchedule.service"
+	import type { fromAction } from "svelte/attachments";
+	import { resolveRoute } from "$app/paths";
 
 	// ========== DATA STATE ==========
 	let employees = $state<Employee[]>([]);
 	let departments = $state<{ id: number; departmentsName: string }[]>([]);
 	let roles = $state<{ id: number; role_name: string }[]>([]);
+	let workSchedules = $state<{ id: number; scheduleName: string }[]>([]);
 
 	// ========== LOAD DATA ==========
 	async function loadEmployees() {
@@ -32,9 +36,24 @@
 		}
 	}
 
+	async function loadWorkSchedule() {
+		try{
+			const res = await getWorkSchedules();
+			workSchedules = res.data;
+
+		} catch(err){
+			console.error("Gagal memuat data Work Schedule", err);
+		}
+	}
+
+	function getWorkScheduleName(id: number | undefined) {
+		return workSchedules.find((s) => s.id === id)?.scheduleName ?? "-";
+	}
+
 	async function loadDepartments() {
 		try {
-			departments = await get<{ id: number; departmentsName: string }[]>("/departments");
+			const res = await get<{ success: boolean; data: { id: number; departmentsName: string }[] }>("/departments");
+			departments = res.data || [];
 		} catch (err) {
 			console.error("Gagal memuat data divisi:", err);
 		}
@@ -42,7 +61,8 @@
 
 	async function loadRoles() {
 		try {
-			roles = await get<{ id: number; role_name: string }[]>("/roles");
+			const res = await get<{ success: boolean; data: { id: number; role_name: string }[] }>("/roles");
+			roles = res.data || [];
 		} catch (err) {
 			console.error("Gagal memuat data role:", err);
 		}
@@ -52,11 +72,13 @@
 		loadEmployees();
 		loadDepartments();
 		loadRoles();
+		loadWorkSchedule();
 	});
 
 	// ========== FILTER & VIEW STATE ==========
 	let searchQuery = $state("");
 	let filterDivision = $state("Semua");
+	let filterWorkSchedule = $state("semua");
 	let viewMode = $state<"grid" | "table">("table");
 
 	// ========== ADD MODAL STATE ==========
@@ -66,6 +88,7 @@
 	let newPhone = $state("");
 	let newDepartmentId = $state<number | undefined>(undefined);
 	let newRoleId = $state<number | undefined>(undefined);
+	let newWorkSchedule = $state<number | undefined>(undefined);
 
 	// ========== EDIT MODAL STATE ==========
 	let isEditModalOpen = $state(false);
@@ -77,6 +100,7 @@
 	let editDepartmentId = $state<number | undefined>(undefined);
 	let editRoleId = $state<number | undefined>(undefined);
 	let editStatus = $state("");
+	let editWorkSchedule = $state<number | undefined>(undefined);
 
 	// ========== DELETE MODAL STATE ==========
 	let isDeleteModalOpen = $state(false);
@@ -103,8 +127,12 @@
 			const division =
 				filterDivision === "Semua" ||
 				e.department === filterDivision;
+			
+			const workSchedule =
+				filterWorkSchedule === "semua" ||
+				e.work_schedule === filterWorkSchedule;
 
-			return search && division;
+			return search && division && workSchedule;
 		})
 	);
 
@@ -122,6 +150,7 @@
 		newPhone = "";
 		newDepartmentId = departments.length > 0 ? departments[0].id : undefined;
 		newRoleId = roles.length > 0 ? roles[0].id : undefined;
+		newWorkSchedule = workSchedules.length > 0 ? workSchedules[0].id : undefined;
 		isAddModalOpen = true;
 	}
 
@@ -144,6 +173,7 @@
 				no_phone: newPhone,
 				department_id: newDepartmentId,
 				role_id: newRoleId,
+				work_schedule_id : newWorkSchedule
 			};
 
 			await createEmployee(data);
@@ -165,11 +195,13 @@
 		editFullName = emp.fullName;
 		editEmail = emp.email ?? "";
 		editPhone = emp.phone ?? "";
-		// Find department_id and role_id by name
+		// mencari departement berdasarkan nama 
 		const dept = departments.find(d => d.departmentsName === emp.department);
 		editDepartmentId = dept ? dept.id : undefined;
 		const role = roles.find(r => r.role_name === emp.role);
 		editRoleId = role ? role.id : undefined;
+		const schedule = workSchedules.find(s => s.scheduleName === emp.work_schedule);
+		editWorkSchedule = schedule ? schedule.id : undefined;
 		editStatus = emp.status;
 		isEditModalOpen = true;
 	}
@@ -197,6 +229,7 @@
 				department_id: editDepartmentId,
 				role_id: editRoleId,
 				status: editStatus,
+				work_schedule_id : editWorkSchedule
 			};
 
 			await updateEmployee(editingEmployee.id, data);
@@ -308,6 +341,7 @@
 					email={emp.email ??"-" }
 					position={emp.department ?? " -"}
 					status={emp.status ?? "Nonaktif"}
+					workSchedule = {emp.work_schedule ?? "-"}
 				>
 					<Button size="sm" variant="ghost" onClick={() => openEditModal(emp)}>
 						<Pencil size={14} style="margin-right: 4px;" />
@@ -332,6 +366,7 @@
 						<th>ID Karyawan</th>
 						<th>Divisi</th>
 						<th>Role</th>
+						<th>Jam Kerja</th>
 						<th>Status</th>
 						<th>Aksi</th>
 					</tr>
@@ -349,6 +384,7 @@
 							<td>{emp.employeeCode}</td>
 							<td>{emp.department ?? "-"}</td>
 							<td>{emp.role ?? "-"}</td>
+							<td>{emp.work_schedule ?? "-"}</td>
 							<td>
 								<Badge variant={emp.status === 'Active' ? 'success' : emp.status === 'Inactive' ? 'warning' : 'danger'}>
 									{emp.status}
@@ -368,7 +404,7 @@
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="6">
+							<td colspan="7">
 								<EmptyState
 									title="Tidak ada karyawan ditemukan"
 									description="Coba ubah kata kunci pencarian atau filter divisi."
@@ -394,6 +430,14 @@
 			<select id="add-division-select" bind:value={newDepartmentId} class="form-select">
 				{#each departments as dept}
 					<option value={dept.id}>{dept.departmentsName}</option>
+				{/each}
+			</select>
+		</div>
+		<div class="form-group">
+			<label for="add-role-select" class="form-label">Work Schedule</label>
+			<select id="add-division-select" bind:value={newWorkSchedule} class="form-select">
+				{#each workSchedules as work}
+					<option value={work.id}>{work.scheduleName}</option>
 				{/each}
 			</select>
 		</div>
@@ -431,6 +475,15 @@
 				<option value={undefined}>-- Pilih Divisi --</option>
 				{#each departments as dept}
 					<option value={dept.id}>{dept.departmentsName}</option>
+				{/each}
+			</select>
+		</div>
+
+		<div class="form-group">
+			<label for="add-role-select" class="form-label">Work Schedule</label>
+			<select id="add-division-select" bind:value={editWorkSchedule} class="form-select">
+				{#each workSchedules as work}
+					<option value={work.id}>{work.scheduleName}</option>
 				{/each}
 			</select>
 		</div>
@@ -591,6 +644,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+		max-height: 80vh;
 	}
 
 	.form-group {

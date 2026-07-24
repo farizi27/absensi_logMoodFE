@@ -9,6 +9,7 @@ export interface Employee {
 	role: string | null;
 	status: string;
 	photo: string | null;
+	work_schedule : string | null;
 }
 
 export interface EmployeeResponse {
@@ -23,6 +24,7 @@ export interface EmployeeCreateRequest {
 	no_phone: string;
 	department_id?: number;
 	role_id?: number;
+	work_schedule_id? : number;
 }
 
 export interface EmployeeUpdateRequest {
@@ -33,4 +35,5 @@ export interface EmployeeUpdateRequest {
 	department_id?: number;
 	role_id?: number;
 	status?: string;
+	work_schedule_id?: number;
 }

@@ -9,6 +9,7 @@ export interface AttendanceLog {
 	checkIn: string | null;
 	checkOut: string | null;
 	workingHours: string | null;
+	photoIn?: string | null;
 	attendanceStatus: "present" | "late" | "absent" | string;
 	createdAt: string;
 }
@@ -21,4 +22,5 @@ export interface AttendanceResponse {
 export interface AttendanceRequest {
 	latitude: number;
 	longitude: number;
+	photo?: string | null;
 }

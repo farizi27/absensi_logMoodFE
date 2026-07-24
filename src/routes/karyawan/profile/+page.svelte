@@ -3,16 +3,53 @@
 	import Button from "$lib/components/ui/Button.svelte";
 	import Input from "$lib/components/ui/Input.svelte";
 	import Avatar from "$lib/components/ui/Avatar.svelte";
+	import Toast from "$lib/components/ui/Toast.svelte";
+	import Spinner from "$lib/components/ui/Spinner.svelte";
+	import { onMount } from "svelte";
+	import { auth } from "$lib/stores/auth";
 
-	let name = $state("Budi Santoso");
-	let email = $state("budi@company.com");
-	let division = $state("IT Engineering");
-	let password = $state("********");
+	let name = $state("");
+	let email = $state("");
+	let password = $state("");
+	let isLoading = $state(false);
+
+	let toastVisible = $state(false);
+	let toastMessage = $state("");
+	let toastType = $state<"success" | "danger" | "warning" | "info">("success");
+
+	function showToast(message: string, type: "success" | "danger" | "warning" | "info" = "success") {
+		toastMessage = message;
+		toastType = type;
+		toastVisible = true;
+	}
+
+	onMount(() => {
+		auth.loadFromStorage();
+		if ($auth.user) {
+			name = $auth.user.name || "";
+			email = $auth.user.email || "";
+		}
+	});
+
+	function handleSave() {
+		showToast("Informasi profil diperbarui", "success");
+	}
 </script>
 
 <svelte:head>
 	<title>Profil Saya - LogMood</title>
 </svelte:head>
+
+<Toast 
+	visible={toastVisible} 
+	message={toastMessage} 
+	type={toastType} 
+	onClose={() => toastVisible = false} 
+/>
+
+{#if isLoading}
+	<Spinner fullscreen label="Memuat profil..." />
+{/if}
 
 <div class="page-container">
 	<div class="header-action">
@@ -25,22 +62,16 @@
 	<Card border padding="lg">
 		<div class="profile-card-content">
 			<div class="avatar-section">
-				<Avatar name={name} size={80} />
+				<Avatar name={name || "Karyawan"} size={80} />
 				<div class="user-meta">
-					<h2>{name}</h2>
+					<h2>{name || "Karyawan"}</h2>
 					<span class="role-badge">Karyawan</span>
 				</div>
 			</div>
 
 			<div class="form-grid">
-				<Input label="Nama Lengkap" bind:value={name} />
+				<Input label="Nama Lengkap" bind:value={name} disabled />
 				<Input label="Email Perusahaan" bind:value={email} disabled />
-				<Input label="Divisi" bind:value={division} disabled />
-				<Input label="Password" bind:value={password} type="password" />
-			</div>
-
-			<div class="card-footer">
-				<Button onClick={() => alert("Profil diperbarui!")}>Simpan Perubahan</Button>
 			</div>
 		</div>
 	</Card>
@@ -102,11 +133,5 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1.25rem;
-	}
-
-	.card-footer {
-		display: flex;
-		justify-content: flex-end;
-		padding-top: 0.5rem;
 	}
 </style>

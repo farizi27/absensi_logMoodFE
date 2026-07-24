@@ -1,6 +1,5 @@
-// src/lib/services/employee.service.ts
-
-import { del, get, post, put, patch } from "./api";
+// src/lib/services/employee.service.t
+import { del, get, postForm, putForm, patch } from "./api";
 
 import type {
 	Employee,
@@ -32,9 +31,24 @@ export function getEmployee(id: number) {
 export function createEmployee(
 	data: EmployeeCreateRequest
 ) {
-	return post<Employee>(
+	const formData: Record<string, string> = {
+		employee_code: data.employee_code,
+		full_name: data.full_name,
+		no_phone: data.no_phone,
+	};
+	if (data.department_id !== undefined && data.department_id !== null) {
+		formData.department_id = String(data.department_id);
+	}
+	if (data.role_id !== undefined && data.role_id !== null) {
+		formData.role_id = String(data.role_id);
+	}
+	if (data.work_schedule_id !== undefined && data.work_schedule_id !== null) {
+		formData.workScheduleId = String(data.work_schedule_id);
+	}
+
+	return postForm<{ success: boolean; data: Employee }>(
 		"/employees",
-		data
+		formData
 	);
 }
 
@@ -46,9 +60,26 @@ export function updateEmployee(
 	id: number,
 	data: EmployeeUpdateRequest
 ) {
-	return put<Employee>(
+	const formData: Record<string, string> = {
+		employee_code: data.employee_code,
+		full_name: data.full_name,
+		no_phone: data.no_phone,
+	};
+	if (data.email) formData.email = data.email;
+	if (data.status) formData.status = data.status;
+	if (data.department_id !== undefined && data.department_id !== null) {
+		formData.department_id = String(data.department_id);
+	}
+	if (data.role_id !== undefined && data.role_id !== null) {
+		formData.role_id = String(data.role_id);
+	}
+	if (data.work_schedule_id !== undefined && data.work_schedule_id !== null) {
+		formData.workScheduleId = String(data.work_schedule_id);
+	}
+
+	return putForm<{ success: boolean; data: Employee }>(
 		`/employees/${id}`,
-		data
+		formData
 	);
 }
 
@@ -57,7 +88,7 @@ export function updateEmployee(
 =========================== */
 
 export function deleteEmployee(id: number) {
-	return del<void>(
+	return del<{ success: boolean; message: string }>(
 		`/employees/${id}`
 	);
 }

@@ -16,6 +16,10 @@ export function getMoodJournals() {
 	return get<MoodJournalResponse>("/moodJournals");
 }
 
+export function getMyMoodJournals() {
+	return get<MoodJournalResponse>("/moodJournals/my-journals");
+}
+
 /* ===========================
    CREATE
 =========================== */

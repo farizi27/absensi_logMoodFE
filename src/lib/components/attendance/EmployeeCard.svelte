@@ -10,6 +10,7 @@
 		position?: string;
 		photo?: string;
 		status?: string;
+		workSchedule? : string;
 		children?: Snippet;
 	}
 

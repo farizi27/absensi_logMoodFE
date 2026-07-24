@@ -5,7 +5,8 @@ import {
 	CalendarDays,
 	ClipboardList,
 	ChartColumn,
-	UserCircle
+	UserCircle,
+	Clock
 } from "@lucide/svelte";
 
 import type { Component } from "svelte";
@@ -60,6 +61,11 @@ export const adminNavigation: NavigationGroup[] = [
 				label: "Divisi",
 				href: "/admin/divisi",
 				icon: Building2
+			},
+			{
+				label: "Jadwal Kerja",
+				href: "/admin/work_schedule",
+				icon: Clock
 			}
 		]
 	},

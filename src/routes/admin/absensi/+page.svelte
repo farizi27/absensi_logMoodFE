@@ -7,6 +7,8 @@
 	import Input from "$lib/components/ui/Input.svelte";
 	import Spinner from "$lib/components/ui/Spinner.svelte";
 	import Toast from "$lib/components/ui/Toast.svelte";
+	import Modal from "$lib/components/ui/Modal.svelte";
+	import Avatar from "$lib/components/ui/Avatar.svelte";
 	import EmptyState from "$lib/components/common/EmptyState.svelte";
 	import { CheckCircle, Clock, AlertTriangle, UserX, Download } from "@lucide/svelte";
 	import { onMount } from "svelte";
@@ -24,6 +26,9 @@
 	let departments = $state<Department[]>([]);
 	let isLoading = $state(false);
 
+	let selectedPhoto = $state<string | null>(null);
+	let isPhotoModalOpen = $state(false);
+
 	let toastVisible = $state(false);
 	let toastMessage = $state("");
 	let toastType = $state<"success" | "danger" | "warning" | "info">("success");
@@ -32,6 +37,11 @@
 		toastMessage = message;
 		toastType = type;
 		toastVisible = true;
+	}
+
+	function viewPhoto(photoUrl: string) {
+		selectedPhoto = photoUrl;
+		isPhotoModalOpen = true;
 	}
 
 	async function loadData() {
@@ -235,6 +245,7 @@
 		<Table hoverable striped bordered>
 			<thead>
 				<tr>
+					<th>Selfie</th>
 					<th>Nama Karyawan</th>
 					<th>Divisi</th>
 					<th>Tanggal</th>
@@ -247,6 +258,15 @@
 				{#each filteredRecords as record}
 					{@const statusBadge = getStatusBadge(record.attendanceStatus)}
 					<tr>
+						<td>
+							{#if record.photoIn}
+								<button class="photo-preview-btn" onclick={() => viewPhoto(record.photoIn!)} title="Lihat Foto Selfie">
+									<Avatar src={record.photoIn} name={record.employeeName ?? "Selfie"} size={36} />
+								</button>
+							{:else}
+								<span class="no-photo">-</span>
+							{/if}
+						</td>
 						<td><strong>{record.employeeName ?? "Unknown"}</strong></td>
 						<td>{record.departmentName ?? "-"}</td>
 						<td>{formatDate(record.attendanceDate)}</td>
@@ -260,7 +280,7 @@
 					</tr>
 				{:else}
 					<tr>
-						<td colspan="6">
+						<td colspan="7">
 							<EmptyState
 								title="Tidak ada log presensi"
 								description="Belum ada catatan presensi karyawan yang sesuai dengan filter."
@@ -272,6 +292,15 @@
 		</Table>
 	</Card>
 </div>
+
+<!-- Modal Detail Foto Selfie Admin -->
+<Modal open={isPhotoModalOpen} title="Foto Selfie Presensi Karyawan" onClose={() => isPhotoModalOpen = false}>
+	{#if selectedPhoto}
+		<div class="modal-photo-content">
+			<img src={selectedPhoto} alt="Foto Selfie Presensi Karyawan" class="full-photo" />
+		</div>
+	{/if}
+</Modal>
 
 <style>
 	.page-container {
@@ -353,5 +382,39 @@
 		font-weight: 600;
 		margin-bottom: 1rem;
 		color: var(--color-text);
+	}
+
+	.photo-preview-btn {
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		transition: transform 0.2s ease;
+	}
+
+	.photo-preview-btn:hover {
+		transform: scale(1.1);
+	}
+
+	.no-photo {
+		color: var(--color-text-light);
+		font-size: 0.9rem;
+	}
+
+	.modal-photo-content {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		padding: 1rem 0;
+	}
+
+	.full-photo {
+		max-width: 100%;
+		max-height: 400px;
+		border-radius: var(--radius-md, 12px);
+		box-shadow: var(--shadow-md);
+		object-fit: contain;
 	}
 </style>
