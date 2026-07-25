@@ -14,6 +14,8 @@
 	} from "$lib/services/workSchedule.service";
 	import type { WorkSchedule } from "$lib/types/workSchedule";
 	import { Clock, Plus, Pencil, Trash2, AlertTriangle, Timer } from "@lucide/svelte";
+	import ConfirmDialog from "$lib/components/common/ConfirmDialog.svelte";
+	import EmptyState from "$lib/components/common/EmptyState.svelte";
 
 	// ── Data ────────────────────────────────────────────────
 	let schedules = $state<WorkSchedule[]>([]);
@@ -198,11 +200,14 @@
 
 	<!-- Cards Grid -->
 	{#if schedules.length === 0 && !isLoading}
-		<div class="empty-state">
-			<Clock size={48} strokeWidth={1.5} />
-			<p>Belum ada jadwal kerja yang dibuat.</p>
-			<span>Klik tombol "Tambah Jadwal" untuk membuat jadwal baru.</span>
-		</div>
+		<EmptyState
+			title="Belum ada jadwal kerja"
+			description="Klik tombol 'Tambah Jadwal' untuk membuat jadwal baru."
+		>
+			{#snippet icon()}
+				<Clock size={36} strokeWidth={1.5} />
+			{/snippet}
+		</EmptyState>
 	{:else}
 		<div class="schedules-grid">
 			{#each schedules as sched (sched.id)}
@@ -336,22 +341,20 @@
 </Modal>
 
 <!-- ── Modal Hapus ───────────────────────────────────────── -->
-<Modal open={isDeleteModalOpen} title="Konfirmasi Hapus Jadwal" onClose={() => isDeleteModalOpen = false}>
-	<div class="delete-confirmation">
-		<div class="warning-icon">
-			<AlertTriangle size={48} color="var(--color-danger)" />
-		</div>
-		<p>Apakah Anda yakin ingin menghapus jadwal <strong>{schedToDelete?.scheduleName}</strong>?</p>
-		<p class="text-muted">Karyawan yang terhubung ke jadwal ini perlu diperbarui secara manual.</p>
-	</div>
-
-	{#snippet footer()}
-		<Button variant="ghost" onClick={() => isDeleteModalOpen = false}>Batal</Button>
-		<Button variant="danger" onClick={handleDelete}>
-			Ya, Hapus Jadwal
-		</Button>
+<ConfirmDialog
+	open={isDeleteModalOpen}
+	title="Konfirmasi Hapus Jadwal"
+	message={`Apakah Anda yakin ingin menghapus jadwal ${schedToDelete?.scheduleName}? Karyawan yang terhubung ke jadwal ini perlu diperbarui secara manual.`}
+	confirmText="Ya, Hapus Jadwal"
+	cancelText="Batal"
+	variant="danger"
+	onConfirm={handleDelete}
+	onCancel={() => isDeleteModalOpen = false}
+>
+	{#snippet icon()}
+		<AlertTriangle size={48} color="var(--color-danger)" />
 	{/snippet}
-</Modal>
+</ConfirmDialog>
 
 <style>
 	.page-container {
@@ -379,28 +382,6 @@
 		font-size: 0.95rem;
 		margin: 0;
 	}
-
-	/* ── Empty State ── */
-	.empty-state {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 0.75rem;
-		padding: 4rem 1rem;
-		color: var(--color-text-light);
-		text-align: center;
-		background: var(--color-surface, #f8fafc);
-		border: 1px dashed var(--color-border);
-		border-radius: var(--radius-lg, 16px);
-	}
-	.empty-state p {
-		margin: 0;
-		font-size: 1rem;
-		font-weight: 600;
-		color: var(--color-text);
-	}
-	.empty-state span { font-size: 0.875rem; }
 
 	/* ── Grid ── */
 	.schedules-grid {
@@ -531,24 +512,5 @@
 	.time-input:focus {
 		border-color: var(--color-primary, #2563eb);
 		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-	}
-
-	/* ── Delete confirm ── */
-	.delete-confirmation {
-		text-align: center;
-		padding: 1rem 0;
-	}
-	.warning-icon {
-		display: flex;
-		justify-content: center;
-		margin-bottom: 1rem;
-	}
-	.delete-confirmation p {
-		margin-bottom: 0.5rem;
-		color: var(--color-text);
-	}
-	.delete-confirmation .text-muted {
-		color: var(--color-text-light);
-		font-size: 0.9rem;
 	}
 </style>

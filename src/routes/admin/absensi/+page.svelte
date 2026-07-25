@@ -5,6 +5,7 @@
 	import Badge from "$lib/components/ui/Badge.svelte";
 	import Button from "$lib/components/ui/Button.svelte";
 	import Input from "$lib/components/ui/Input.svelte";
+	import Select from "$lib/components/ui/Select.svelte";
 	import Spinner from "$lib/components/ui/Spinner.svelte";
 	import Toast from "$lib/components/ui/Toast.svelte";
 	import Modal from "$lib/components/ui/Modal.svelte";
@@ -25,6 +26,11 @@
 	let attendanceLogs = $state<AttendanceLog[]>([]);
 	let departments = $state<Department[]>([]);
 	let isLoading = $state(false);
+
+	const divisionOptions = $derived([
+		{ label: "Semua Department", value: "Semua" },
+		...departments.map((d) => ({ label: d.departmentsName, value: d.departmentsName }))
+	]);
 
 	let selectedPhoto = $state<string | null>(null);
 	let isPhotoModalOpen = $state(false);
@@ -222,14 +228,12 @@
 				<Input placeholder="Cari nama karyawan..." bind:value={searchQuery} />
 			</div>
 
-			<div class="filter-item">
-				<label for="division-select">Department:</label>
-				<select id="division-select" bind:value={filterDivision} class="custom-select">
-					<option value="Semua">Semua Department</option>
-					{#each departments as dept}
-						<option value={dept.departmentsName}>{dept.departmentsName}</option>
-					{/each}
-				</select>
+			<div class="filter-item select-wrap">
+				<Select
+					label="Department:"
+					bind:value={filterDivision}
+					options={divisionOptions}
+				/>
 			</div>
 
 			<div class="filter-item">
@@ -360,7 +364,6 @@
 		white-space: nowrap;
 	}
 
-	.custom-select,
 	.custom-date {
 		padding: 0.6rem 0.8rem;
 		border-radius: var(--radius-md, 10px);
@@ -372,9 +375,12 @@
 		transition: 0.2s;
 	}
 
-	.custom-select:focus,
 	.custom-date:focus {
 		border-color: var(--color-primary);
+	}
+
+	.select-wrap {
+		min-width: 200px;
 	}
 
 	.card-title {

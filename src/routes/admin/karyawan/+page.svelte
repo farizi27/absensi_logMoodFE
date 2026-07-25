@@ -15,8 +15,8 @@
 	import { getEmployees, createEmployee, updateEmployee, deleteEmployee } from "$lib/services/employe.service";
 	import { get } from "$lib/services/api";
 	import type { Employee, EmployeeCreateRequest, EmployeeUpdateRequest } from "$lib/types/employee";
-	import {getWorkSchedules} from "$lib/services/workSchedule.service"
-	import type { fromAction } from "svelte/attachments";
+	import { getWorkSchedules } from "$lib/services/workSchedule.service"
+	import ConfirmDialog from "$lib/components/common/ConfirmDialog.svelte";
 	import { resolveRoute } from "$app/paths";
 
 	// ========== DATA STATE ==========
@@ -518,22 +518,20 @@
 </Modal>
 
 <!-- Modal Konfirmasi Hapus -->
-<Modal open={isDeleteModalOpen} title="Konfirmasi Hapus Data" onClose={() => isDeleteModalOpen = false}>
-	<div class="delete-confirmation">
-		<div class="warning-icon">
-			<AlertTriangle size={48} color="var(--color-danger)" />
-		</div>
-		<p>Apakah Anda yakin ingin menghapus data karyawan <strong>{employeeToDelete?.fullName}</strong>?</p>
-		<p class="text-muted">Tindakan ini tidak dapat dibatalkan dan semua data yang terkait mungkin akan hilang.</p>
-	</div>
-
-	{#snippet footer()}
-		<Button variant="ghost" onClick={() => isDeleteModalOpen = false}>Batal</Button>
-		<Button variant="danger" onClick={handleDelete}>
-			Ya, Hapus Data
-		</Button>
+<ConfirmDialog
+	open={isDeleteModalOpen}
+	title="Konfirmasi Hapus Data"
+	message={`Apakah Anda yakin ingin menghapus data karyawan ${employeeToDelete?.fullName}? Tindakan ini tidak dapat dibatalkan dan semua data yang terkait mungkin akan hilang.`}
+	confirmText="Ya, Hapus Data"
+	cancelText="Batal"
+	variant="danger"
+	onConfirm={handleDelete}
+	onCancel={() => isDeleteModalOpen = false}
+>
+	{#snippet icon()}
+		<AlertTriangle size={48} color="var(--color-danger)" />
 	{/snippet}
-</Modal>
+</ConfirmDialog>
 
 <style>
 	.page-container {
@@ -673,26 +671,5 @@
 
 	.form-select:focus {
 		border-color: var(--color-primary);
-	}
-
-	.delete-confirmation {
-		text-align: center;
-		padding: 1rem 0;
-	}
-
-	.warning-icon {
-		display: flex;
-		justify-content: center;
-		margin-bottom: 1rem;
-	}
-	
-	.delete-confirmation p {
-		margin-bottom: 0.5rem;
-		color: var(--color-text);
-	}
-
-	.delete-confirmation .text-muted {
-		color: var(--color-text-light);
-		font-size: 0.9rem;
 	}
 </style>

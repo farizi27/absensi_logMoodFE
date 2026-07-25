@@ -164,27 +164,41 @@ export function putForm<T>(
 	return requestFormData<T>(endpoint, "PUT", data);
 }
 
-// getBlob function for downloading files
-export async function getBlob(endpoint: string): Promise<Blob> {
-	const token = typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
-	const headers = new Headers();
+// --- get blob
+export async function getBlob(
+	endpoint: string,
+	options: RequestInit = {}
+): Promise<Blob> {
+	const token =
+		typeof localStorage !== "undefined"
+			? localStorage.getItem("token")
+			: null;
+
+	const headers = new Headers(options.headers);
+
 	if (token) {
 		headers.set("Authorization", `Bearer ${token}`);
 	}
 
 	const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+		...options,
 		headers
 	});
 
 	if (!response.ok) {
 		let message = `Error ${response.status}: ${response.statusText}`;
+
 		try {
 			const error = await response.json();
 			message = error.message ?? message;
 		} catch {
-			// ignore
+			// File response bukan JSON
 		}
-		throw { message, status: response.status } satisfies ApiError;
+
+		throw {
+			message,
+			status: response.status
+		} satisfies ApiError;
 	}
 
 	return response.blob();

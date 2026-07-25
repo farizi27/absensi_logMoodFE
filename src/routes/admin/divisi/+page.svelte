@@ -17,6 +17,7 @@
 		Department
 	} from "$lib/types/department";
 	import { Building2, Plus, Users, Trash2, AlertTriangle, Pencil } from "@lucide/svelte";
+	import ConfirmDialog from "$lib/components/common/ConfirmDialog.svelte";
 
 	// State for Add Modal
 	let isAddModalOpen = $state(false);
@@ -331,22 +332,20 @@
 </Modal>
 
 <!-- Modal Konfirmasi Hapus -->
-<Modal open={isDeleteModalOpen} title="Konfirmasi Hapus Department" onClose={() => isDeleteModalOpen = false}>
-	<div class="delete-confirmation">
-		<div class="warning-icon">
-			<AlertTriangle size={48} color="var(--color-danger)" />
-		</div>
-		<p>Apakah Anda yakin ingin menghapus department <strong>{deptToDelete?.departmentsName}</strong>?</p>
-		<p class="text-muted">Semua data terkait department ini akan ikut terhapus.</p>
-	</div>
-
-	{#snippet footer()}
-		<Button variant="ghost" onClick={() => isDeleteModalOpen = false}>Batal</Button>
-		<Button variant="danger" onClick={handleDelete}>
-			Ya, Hapus Department
-		</Button>
+<ConfirmDialog
+	open={isDeleteModalOpen}
+	title="Konfirmasi Hapus Department"
+	message={`Apakah Anda yakin ingin menghapus department ${deptToDelete?.departmentsName}? Semua data terkait department ini akan ikut terhapus.`}
+	confirmText="Ya, Hapus Department"
+	cancelText="Batal"
+	variant="danger"
+	onConfirm={handleDelete}
+	onCancel={() => isDeleteModalOpen = false}
+>
+	{#snippet icon()}
+		<AlertTriangle size={48} color="var(--color-danger)" />
 	{/snippet}
-</Modal>
+</ConfirmDialog>
 
 <style>
 	.page-container {
@@ -422,26 +421,5 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-	}
-
-	.delete-confirmation {
-		text-align: center;
-		padding: 1rem 0;
-	}
-
-	.warning-icon {
-		display: flex;
-		justify-content: center;
-		margin-bottom: 1rem;
-	}
-	
-	.delete-confirmation p {
-		margin-bottom: 0.5rem;
-		color: var(--color-text);
-	}
-
-	.delete-confirmation .text-muted {
-		color: var(--color-text-light);
-		font-size: 0.9rem;
 	}
 </style>

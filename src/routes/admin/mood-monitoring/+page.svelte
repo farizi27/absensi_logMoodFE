@@ -5,6 +5,7 @@
 	import Badge from "$lib/components/ui/Badge.svelte";
 	import Avatar from "$lib/components/ui/Avatar.svelte";
 	import Input from "$lib/components/ui/Input.svelte";
+	import Select from "$lib/components/ui/Select.svelte";
 	import EmptyState from "$lib/components/common/EmptyState.svelte";
 	import Toast from "$lib/components/ui/Toast.svelte";
 	import Spinner from "$lib/components/ui/Spinner.svelte";
@@ -15,6 +16,13 @@
 
 	let searchQuery = $state("");
 	let filterMood = $state("semua");
+
+	const ALL_MOODS: MoodLevel[] = ["Excited", "Happy", "Neutral", "Tired", "Stressed"];
+
+	const moodOptions = [
+		{ label: "Semua Mood", value: "semua" },
+		...ALL_MOODS.map(m => ({ label: MOOD_LABEL[m], value: m }))
+	];
 
 	// Data state
 	let moodJournals = $state<MoodJournal[]>([]);
@@ -30,8 +38,6 @@
 		toastType = type;
 		toastVisible = true;
 	}
-
-	const ALL_MOODS: MoodLevel[] = ["Excited", "Happy", "Neutral", "Tired", "Stressed"];
 
 	// Hitung statistik mood dari data
 	const moodStats = $derived(() => {
@@ -146,14 +152,12 @@
 				<Input placeholder="Cari nama karyawan..." bind:value={searchQuery} />
 			</div>
 
-			<div class="filter-item">
-				<label for="mood-select">Mood:</label>
-				<select id="mood-select" bind:value={filterMood} class="custom-select">
-					<option value="semua">Semua Mood</option>
-					{#each ALL_MOODS as mood}
-						<option value={mood}>{MOOD_LABEL[mood]}</option>
-					{/each}
-				</select>
+			<div class="filter-item select-wrap">
+				<Select
+					label="Mood:"
+					bind:value={filterMood}
+					options={moodOptions}
+				/>
 			</div>
 		</div>
 	</Card>
@@ -231,19 +235,8 @@
 		white-space: nowrap;
 	}
 
-	.custom-select {
-		padding: 0.6rem 0.8rem;
-		border-radius: var(--radius-md, 10px);
-		border: 1px solid var(--color-border);
-		background: var(--color-background);
-		color: var(--color-text);
-		font-size: 0.9rem;
-		outline: none;
-		transition: 0.2s;
-	}
-
-	.custom-select:focus {
-		border-color: var(--color-primary);
+	.select-wrap {
+		min-width: 180px;
 	}
 
 	.page-container {
