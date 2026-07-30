@@ -37,9 +37,7 @@
             showToast("Registrasi berhasil", "success");
         } catch (error) {
             console.error(error);
-            const mesage = error instanceof Error
-            ? error.message
-            : "Pendaftaran gagal. Silakan coba lagi.";
+            const mesage = error instanceof Error ? error.message : "Pendaftaran gagal. Silakan coba lagi.";
             showToast(mesage,"danger")
         }
     }

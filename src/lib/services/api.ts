@@ -133,10 +133,7 @@ async function requestFormData<T>(
 			// Response bukan JSON (e.g. sendStatus(401))
 		}
 
-		throw {
-			message,
-			status: response.status
-		} satisfies ApiError;
+		throw new Error(message);
 	}
 
 	if (response.status === 204) {
@@ -192,10 +189,7 @@ export async function getBlob(
 			// File response bukan JSON
 		}
 
-		throw {
-			message,
-			status: response.status
-		} satisfies ApiError;
+		throw new Error(message);
 	}
 
 	return response.blob();
