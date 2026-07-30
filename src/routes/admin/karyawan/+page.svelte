@@ -570,7 +570,7 @@
 
 	.search-box {
 		flex: 1;
-		min-width: 400px;
+		min-width: 240px;
 	}
 
 	.filter-item {
