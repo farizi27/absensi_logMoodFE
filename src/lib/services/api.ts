@@ -39,10 +39,7 @@ async function request<T>(
 			// Response bukan JSON (e.g. sendStatus(401))
 		}
 
-		throw {
-			message,
-			status: response.status
-		} satisfies ApiError;
+		throw new Error(message);
 	}
 
 	if (response.status === 204) {
