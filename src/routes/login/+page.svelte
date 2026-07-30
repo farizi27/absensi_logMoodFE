@@ -6,17 +6,31 @@
     import {login} from '$lib/services/auth.service';
     import {goto} from '$app/navigation';
     import { get } from "svelte/store";
+    import Toast from '$lib/components/ui/Toast.svelte';
 
+    // input state
     let email = $state('');
     let password = $state('');
 
+    // Toast state
+    let toastVisible = $state(false);
+	let toastMessage = $state("");
+	let toastType = $state<"success" | "danger" | "warning" | "info">("success");
+
+    // Toas hendler
+    function showToast(message: string, type: "success" | "danger" | "warning" | "info" = "success") {
+		toastMessage = message;
+		toastType = type;
+		toastVisible = true;
+	}
+
     async function handleLogin() {
         try {
-            console.log("ini bisa")
             const result = await login({
                 email,
                 password
             });
+            showToast("Login berhasil","success")
 
             auth.login(result.token);
 
@@ -31,7 +45,9 @@
             }
 
         } catch (error) {
+            const message = error instanceof Error ? error.message : "Login gagal. Silakan coba lagi.";
             console.error("Login gagal.", error);
+            showToast(message,"danger");
         }
     }
 
@@ -40,6 +56,14 @@
 <svelte:head>
     <title>Login - LogMood</title>
 </svelte:head>
+
+<!-- Toas Notification -->
+<Toast 
+	visible={toastVisible} 
+	message={toastMessage} 
+	type={toastType} 
+	onClose={() => toastVisible = false} 
+/>
 
 <div class="login-page">
     <div class="background-circle circle-1"></div>

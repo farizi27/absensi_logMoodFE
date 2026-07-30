@@ -5,6 +5,19 @@
     import Button from '$lib/components/ui/Button.svelte';
     import {register} from '$lib/services/auth.service';
     import {goto} from '$app/navigation';
+    import Toast from '$lib/components/ui/Toast.svelte';
+
+    // Toas state
+    let toastVisible = $state(false);
+	let toastMessage = $state("");
+	let toastType = $state<"success" | "danger" | "warning" | "info">("success");
+
+    // Toas hendler
+    function showToast(message: string, type: "success" | "danger" | "warning" | "info" = "success") {
+		toastMessage = message;
+		toastType = type;
+		toastVisible = true;
+	}
 
     let full_name = $state('')
     let name = $state('');
@@ -21,9 +34,13 @@
             });
             goto("/login")
             console.log('Registration successful:', result);
+            showToast("Registrasi berhasil", "success");
         } catch (error) {
-            const err = 'Pendaftaran gagal. Silakan coba lagi.';
-            console.error(err, error);
+            console.error(error);
+            const mesage = error instanceof Error
+            ? error.message
+            : "Pendaftaran gagal. Silakan coba lagi.";
+            showToast(mesage,"danger")
         }
     }
 </script>
@@ -31,6 +48,14 @@
 <svelte:head>
     <title>Register - LogMood</title>
 </svelte:head>
+
+<!-- Toas Notification -->
+<Toast 
+	visible={toastVisible} 
+	message={toastMessage} 
+	type={toastType} 
+	onClose={() => toastVisible = false} 
+/>
 
 <div class="login-page">
     <div class="background-circle circle-1"></div>
