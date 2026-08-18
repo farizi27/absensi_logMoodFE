@@ -12,6 +12,7 @@
 	import { createMoodJournal } from '$lib/services/mood.service';
 	import type { AttendanceLog } from '$lib/types/attendance';
 	import type { MoodLevel } from '$lib/types/mood';
+	import * as faceapi from '@vladmandic/face-api';
 
 	let checkedIn = $state(false);
 	let checkedOut = $state(false);
@@ -27,6 +28,10 @@
 	// Mood state
 	let selectedMood = $state<MoodLevel>('Happy');
 	let moodNotes = $state('');
+	
+	// AI state
+	let isAiLoading = $state(false);
+	let isModelsLoaded = $state(false);
 
 	const moods: { emoji: string; label: string; moodLevel: MoodLevel }[] = [
 		{ emoji: '🤩', label: 'Sangat Senang', moodLevel: 'Excited' },
@@ -146,9 +151,22 @@
 		return () => clearInterval(midnightChecker);
 	});
 
+	async function loadAiModels() {
+		try {
+			// Memuat model ML untuk face-api
+			await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+			await faceapi.nets.faceExpressionNet.loadFromUri('/models');
+			isModelsLoaded = true;
+			console.log("Face API models loaded successfully");
+		} catch (error) {
+			console.error("Failed to load Face API models:", error);
+		}
+	}
+
 	onMount(() => {
 		detectLocation();
 		loadAttendanceStatus();
+		loadAiModels();
 	});
 
 	function openCameraModal() {
@@ -203,13 +221,73 @@
 	}
 
 	// Step 1: After taking selfie photo, move to Mood selection modal
-	function proceedToMoodModal() {
+	async function proceedToMoodModal() {
 		if (!capturedPhoto) {
 			showToast('Silakan ambil foto selfie Anda terlebih dahulu.', 'warning');
 			return;
 		}
+		
 		isCameraModalOpen = false;
-		isMoodModalOpen = true;
+		
+		// Jika model sudah dimuat, coba analisis ekspresi wajah
+		if (isModelsLoaded) {
+			try {
+				isAiLoading = true;
+				const img = new Image();
+				img.src = capturedPhoto;
+				
+				// Tunggu gambar di-load ke memory
+				await new Promise((resolve) => {
+					img.onload = resolve;
+				});
+
+				const detection = await faceapi
+					.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+					.withFaceExpressions();
+
+				if (detection) {
+					// Cari ekspresi dengan skor tertinggi
+					const expressions = detection.expressions;
+					const sorted = Object.entries(expressions).sort((a, b) => b[1] - a[1]);
+					const dominantExpression = sorted[0][0];
+
+					// Pemetaan expression ke MoodLevel
+					switch (dominantExpression) {
+						case 'happy':
+							selectedMood = 'Happy';
+							break;
+						case 'surprised':
+							selectedMood = 'Excited';
+							break;
+						case 'neutral':
+							selectedMood = 'Neutral';
+							break;
+						case 'sad':
+						case 'fearful':
+						case 'angry':
+							selectedMood = 'Stressed';
+							break;
+						case 'disgusted':
+							selectedMood = 'Tired';
+							break;
+						default:
+							selectedMood = 'Neutral';
+					}
+					showToast(`Deteksi AI: Wajah Anda terlihat ${dominantExpression}!`, 'info');
+				} else {
+					console.warn("Wajah tidak terdeteksi dengan jelas.");
+					showToast('Wajah tidak terdeteksi jelas, silakan pilih mood secara manual.', 'warning');
+				}
+			} catch (error) {
+				console.error("AI Analysis failed:", error);
+			} finally {
+				isAiLoading = false;
+				isMoodModalOpen = true;
+			}
+		} else {
+			// Fallback jika model gagal di-load
+			isMoodModalOpen = true;
+		}
 	}
 
 	// Absen Keluar
@@ -269,8 +347,8 @@
 	onClose={() => (toastVisible = false)}
 />
 
-{#if isLoading}
-	<Spinner fullscreen label="Memproses presensi & mood..." />
+{#if isLoading || isAiLoading}
+	<Spinner fullscreen label={isAiLoading ? "AI Sedang menganalisis wajah..." : "Memproses presensi & mood..."} />
 {/if}
 
 <div class="page-container">
@@ -377,7 +455,7 @@
 	<div class="modal-mood-container">
 		<div class="captured-badge">
 			<Avatar src={capturedPhoto || ''} name="Selfie" size={48} />
-			<span>Foto selfie berhasil diambil! Silakan pilih mood Anda.</span>
+			<span>AI telah menganalisis wajah Anda! Anda tetap bisa menyesuaikan pilihan di bawah.</span>
 		</div>
 
 		<h3>Bagaimana Perasaanmu Hari Ini?</h3>

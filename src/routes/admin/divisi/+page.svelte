@@ -77,7 +77,6 @@
 			isLoading = true;
 
 			const result = await getDepartments();
-			console.log('API result:', result);
 			departments = result.data;
 		} catch (error) {
 			console.error(error);
@@ -262,7 +261,7 @@
 
 	<!-- Using Card UI Component -->
 	<div class="departmentons-grid">
-		{#each departments as department}
+		{#each departments as department (department.id)}
 			<Card hover border padding="lg">
 				<div class="card-head">
 					<div class="icon-wrap">
