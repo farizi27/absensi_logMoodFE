@@ -7,7 +7,6 @@
     import {goto} from '$app/navigation';
     import { get } from "svelte/store";
     import Toast from '$lib/components/ui/Toast.svelte';
-    import type { ApiError } from "$lib/services/api";
 
     // input state
     let email = $state('');

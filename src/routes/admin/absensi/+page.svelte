@@ -103,7 +103,7 @@
 			{
 				title: "Terlambat",
 				value: lateCount.toString(),
-				desc: "Melewati jam 08:00",
+				desc: "Melewati jam kerja",
 				color: "warning" as const,
 				iconComp: Clock
 			},

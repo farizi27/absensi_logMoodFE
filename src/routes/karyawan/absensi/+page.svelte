@@ -1,44 +1,44 @@
 <script lang="ts">
-	import Card from "$lib/components/ui/Card.svelte";
-	import Button from "$lib/components/ui/Button.svelte";
-	import Modal from "$lib/components/ui/Modal.svelte";
-	import FaceCapture from "$lib/components/common/FaceCapture.svelte";
-	import Avatar from "$lib/components/ui/Avatar.svelte";
-	import Toast from "$lib/components/ui/Toast.svelte";
-	import Spinner from "$lib/components/ui/Spinner.svelte";
-	import { MapPin, Camera, Check, RefreshCw, Smile } from "@lucide/svelte";
-	import { onMount } from "svelte";
-	import { checkIn, checkOut, getMyAttendanceHistory } from "$lib/services/attendance.service";
-	import { createMoodJournal } from "$lib/services/mood.service";
-	import type { AttendanceLog } from "$lib/types/attendance";
-	import type { MoodLevel } from "$lib/types/mood";
+	import Card from '$lib/components/ui/Card.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import Modal from '$lib/components/ui/Modal.svelte';
+	import FaceCapture from '$lib/components/common/FaceCapture.svelte';
+	import Avatar from '$lib/components/ui/Avatar.svelte';
+	import Toast from '$lib/components/ui/Toast.svelte';
+	import Spinner from '$lib/components/ui/Spinner.svelte';
+	import { MapPin, Camera, Check, RefreshCw, Smile } from '@lucide/svelte';
+	import { onMount } from 'svelte';
+	import { checkIn, checkOut, getMyAttendanceHistory } from '$lib/services/attendance.service';
+	import { createMoodJournal } from '$lib/services/mood.service';
+	import type { AttendanceLog } from '$lib/types/attendance';
+	import type { MoodLevel } from '$lib/types/mood';
 
 	let checkedIn = $state(false);
 	let checkedOut = $state(false);
-	let checkInTime = $state("");
-	let checkOutTime = $state("");
+	let checkInTime = $state('');
+	let checkOutTime = $state('');
 	let capturedPhoto = $state<string | null>(null);
-	
+
 	// Modals state
 	let isCameraModalOpen = $state(false);
 	let isMoodModalOpen = $state(false);
 	let isLoading = $state(false);
 
 	// Mood state
-	let selectedMood = $state<MoodLevel>("Happy");
-	let moodNotes = $state("");
+	let selectedMood = $state<MoodLevel>('Happy');
+	let moodNotes = $state('');
 
 	const moods: { emoji: string; label: string; moodLevel: MoodLevel }[] = [
-		{ emoji: "🤩", label: "Sangat Senang", moodLevel: "Excited" },
-		{ emoji: "😊", label: "Senang", moodLevel: "Happy" },
-		{ emoji: "😐", label: "Netral", moodLevel: "Neutral" },
-		{ emoji: "🥱", label: "Lelah", moodLevel: "Tired" },
-		{ emoji: "😠", label: "Stres / Kesal", moodLevel: "Stressed" }
+		{ emoji: '🤩', label: 'Sangat Senang', moodLevel: 'Excited' },
+		{ emoji: '😊', label: 'Senang', moodLevel: 'Happy' },
+		{ emoji: '😐', label: 'Netral', moodLevel: 'Neutral' },
+		{ emoji: '🥱', label: 'Lelah', moodLevel: 'Tired' },
+		{ emoji: '😠', label: 'Stres / Kesal', moodLevel: 'Stressed' }
 	];
 
-	let latitude = $state<number>(-6.200000);
+	let latitude = $state<number>(-6.2);
 	let longitude = $state<number>(106.816666);
-	let locationText = $state("Mendeteksi lokasi...");
+	let locationText = $state('Mendeteksi lokasi...');
 
 	let currentTime = $state(new Date().toLocaleTimeString('id-ID'));
 
@@ -46,21 +46,21 @@
 	let activeDate = $state(new Date().toISOString().split('T')[0]);
 
 	let toastVisible = $state(false);
-	let toastMessage = $state("");
-	let toastType = $state<"success" | "danger" | "warning" | "info">("success");
+	let toastMessage = $state('');
+	let toastType = $state<'success' | 'danger' | 'warning' | 'info'>('success');
 
-	function showToast(message: string, type: "success" | "danger" | "warning" | "info" = "success") {
+	function showToast(message: string, type: 'success' | 'danger' | 'warning' | 'info' = 'success') {
 		toastMessage = message;
 		toastType = type;
 		toastVisible = true;
 	}
 
 	function formatTime(timeStr: string | null): string {
-		if (!timeStr) return "-";
+		if (!timeStr) return '-';
 		try {
 			const date = new Date(timeStr);
 			if (isNaN(date.getTime())) return timeStr;
-			return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+			return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 		} catch {
 			return timeStr;
 		}
@@ -71,10 +71,14 @@
 			isLoading = true;
 			const res = await getMyAttendanceHistory().catch(() => ({ data: [] }));
 			const logs: AttendanceLog[] = res.data || [];
-			
-			const todayStr = new Date().toISOString().split("T")[0];
+
+			const todayStr = new Date().toISOString().split('T')[0];
 			const todayLog = logs.find((log) => {
-				const logDate = log.attendanceDate ? log.attendanceDate.split("T")[0] : log.createdAt ? log.createdAt.split("T")[0] : "";
+				const logDate = log.attendanceDate
+					? log.attendanceDate.split('T')[0]
+					: log.createdAt
+						? log.createdAt.split('T')[0]
+						: '';
 				return logDate === todayStr;
 			});
 
@@ -96,7 +100,7 @@
 	}
 
 	function detectLocation() {
-		if ("geolocation" in navigator) {
+		if ('geolocation' in navigator) {
 			navigator.geolocation.getCurrentPosition(
 				(pos) => {
 					latitude = pos.coords.latitude;
@@ -104,7 +108,7 @@
 					locationText = `Lat: ${latitude.toFixed(4)}, Long: ${longitude.toFixed(4)} (Radius Valid)`;
 				},
 				(err) => {
-					console.warn("Geolocation warning:", err.message);
+					console.warn('Geolocation warning:', err.message);
 					locationText = `Lat: ${latitude}, Long: ${longitude} (Lokasi Default)`;
 				}
 			);
@@ -115,8 +119,8 @@
 
 	// Update live clock
 	$effect(() => {
-	const interval = setInterval(() => {
-		currentTime = new Date().toLocaleTimeString('id-ID');
+		const interval = setInterval(() => {
+			currentTime = new Date().toLocaleTimeString('id-ID');
 		}, 1000);
 		return () => clearInterval(interval);
 	});
@@ -124,8 +128,8 @@
 	// Midnight reset: cek pergantian hari setiap 30 detik
 	// Jika tanggal berubah, reset state absensi agar karyawan bisa absen kembali
 	$effect(() => {
-	const midnightChecker = setInterval(() => {
-		const nowDate = new Date().toISOString().split('T')[0];
+		const midnightChecker = setInterval(() => {
+			const nowDate = new Date().toISOString().split('T')[0];
 			if (nowDate !== activeDate) {
 				// Hari sudah berganti — reset semua state absensi
 				activeDate = nowDate;
@@ -165,7 +169,7 @@
 			// Compress and resize image using Canvas for fast lightweight payload
 			const img = new Image();
 			img.onload = () => {
-				const canvas = document.createElement("canvas");
+				const canvas = document.createElement('canvas');
 				const maxDim = 400;
 				let width = img.width;
 				let height = img.height;
@@ -185,10 +189,10 @@
 				canvas.width = width;
 				canvas.height = height;
 
-				const ctx = canvas.getContext("2d");
+				const ctx = canvas.getContext('2d');
 				if (ctx) {
 					ctx.drawImage(img, 0, 0, width, height);
-					capturedPhoto = canvas.toDataURL("image/jpeg", 0.7);
+					capturedPhoto = canvas.toDataURL('image/jpeg', 0.7);
 				} else {
 					capturedPhoto = rawSrc;
 				}
@@ -201,23 +205,23 @@
 	// Step 1: After taking selfie photo, move to Mood selection modal
 	function proceedToMoodModal() {
 		if (!capturedPhoto) {
-			showToast("Silakan ambil foto selfie Anda terlebih dahulu.", "warning");
+			showToast('Silakan ambil foto selfie Anda terlebih dahulu.', 'warning');
 			return;
 		}
 		isCameraModalOpen = false;
 		isMoodModalOpen = true;
 	}
 
-	// Absen Keluar langsung — tanpa kamera & mood
+	// Absen Keluar
 	async function handleCheckOut() {
 		try {
 			isLoading = true;
 			await checkOut({ latitude, longitude });
-			showToast("Absen keluar berhasil dicatat!", "success");
+			showToast('Absen keluar berhasil dicatat!', 'success');
 			await loadAttendanceStatus();
 		} catch (err: unknown) {
 			const e = err as { message?: string };
-			showToast(e?.message || "Gagal melakukan absen keluar", "danger");
+			showToast(e?.message || 'Gagal melakukan absen keluar', 'danger');
 		} finally {
 			isLoading = false;
 		}
@@ -227,7 +231,7 @@
 	async function submitAttendanceAndMood() {
 		try {
 			isLoading = true;
-			
+
 			// 1. Submit Attendance Check-In or Check-Out
 			if (!checkedIn) {
 				await checkIn({ latitude, longitude, photo: capturedPhoto });
@@ -239,15 +243,15 @@
 			await createMoodJournal({
 				moodLevel: selectedMood,
 				note: moodNotes || undefined
-			}).catch((err) => console.warn("Mood journal save skipped/failed:", err));
+			}).catch((err) => console.warn('Mood journal save skipped/failed:', err));
 
-			showToast("Foto selfie, presensi, dan jurnal mood berhasil disimpan!", "success");
-			
+			showToast('Foto selfie, presensi, dan jurnal mood berhasil disimpan!', 'success');
+
 			await loadAttendanceStatus();
 			isMoodModalOpen = false;
 		} catch (error: any) {
 			console.error(error);
-			showToast(error?.message || "Gagal melakukan presensi", "danger");
+			showToast(error?.message || 'Gagal melakukan presensi', 'danger');
 		} finally {
 			isLoading = false;
 		}
@@ -258,11 +262,11 @@
 	<title>Absensi Karyawan - LogMood</title>
 </svelte:head>
 
-<Toast 
-	visible={toastVisible} 
-	message={toastMessage} 
-	type={toastType} 
-	onClose={() => toastVisible = false} 
+<Toast
+	visible={toastVisible}
+	message={toastMessage}
+	type={toastType}
+	onClose={() => (toastVisible = false)}
 />
 
 {#if isLoading}
@@ -282,7 +286,14 @@
 			<div class="time-display">
 				<span class="live-tag">LIVE CLOCK</span>
 				<h2>{currentTime}</h2>
-				<p>{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+				<p>
+					{new Date().toLocaleDateString('id-ID', {
+						weekday: 'long',
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric'
+					})}
+				</p>
 			</div>
 
 			<div class="location-box">
@@ -308,17 +319,15 @@
 						<Check size={24} />
 						<span>Anda Sudah Absen Masuk Hari Ini ({checkInTime})</span>
 					</div>
-				<Button variant="secondary" fullWidth onClick={handleCheckOut}>
-						Absen Keluar
-					</Button>
+					<Button variant="secondary" fullWidth onClick={handleCheckOut}>Absen Keluar</Button>
 				{:else}
 					<div class="success-message">
 						<Check size={24} />
 						<span>Presensi Hari Ini Selesai (Masuk: {checkInTime}, Keluar: {checkOutTime})</span>
 					</div>
 					<p class="next-attendance-info">
-						🔄 Absensi akan tersedia kembali mulai <strong>00:00 hari berikutnya</strong>.
-						Data hari ini tersimpan di <a href="/karyawan/riwayat-absensi">Riwayat Absensi</a>.
+						🔄 Absensi akan tersedia kembali mulai <strong>00:00 hari berikutnya</strong>. Data hari
+						ini tersimpan di <a href="/karyawan/riwayat-absensi">Riwayat Absensi</a>.
 					</p>
 				{/if}
 			</div>
@@ -330,14 +339,16 @@
 <Modal open={isCameraModalOpen} title="1. Presensi Wajah / Take Selfie" onClose={closeCameraModal}>
 	<div class="modal-camera-container">
 		{#if !capturedPhoto}
-			<p class="instruction">Posisikan wajah Anda di dalam area kamera lalu tekan <strong>Ambil Foto</strong>.</p>
+			<p class="instruction">
+				Posisikan wajah Anda di dalam area kamera lalu tekan <strong>Ambil Foto</strong>.
+			</p>
 			<FaceCapture onCapture={handleCaptureFile} />
 		{:else}
 			<div class="photo-preview-confirm">
 				<p class="instruction">Pratinjau Hasil Foto Selfie Presensi:</p>
 				<Avatar src={capturedPhoto} name="Captured Face" size={140} />
 				<div class="retake-btn">
-					<Button variant="ghost" size="sm" onClick={() => capturedPhoto = null}>
+					<Button variant="ghost" size="sm" onClick={() => (capturedPhoto = null)}>
 						<RefreshCw size={16} style="margin-right: 6px;" />
 						Foto Ulang
 					</Button>
@@ -358,10 +369,14 @@
 </Modal>
 
 <!-- Modal 2: Pilih Jurnal Mood Harian -->
-<Modal open={isMoodModalOpen} title="2. Pilih Jurnal Mood Hari Ini" onClose={() => isMoodModalOpen = false}>
+<Modal
+	open={isMoodModalOpen}
+	title="2. Pilih Jurnal Mood Hari Ini"
+	onClose={() => (isMoodModalOpen = false)}
+>
 	<div class="modal-mood-container">
 		<div class="captured-badge">
-			<Avatar src={capturedPhoto || ""} name="Selfie" size={48} />
+			<Avatar src={capturedPhoto || ''} name="Selfie" size={48} />
 			<span>Foto selfie berhasil diambil! Silakan pilih mood Anda.</span>
 		</div>
 
@@ -372,7 +387,7 @@
 					type="button"
 					class="emoji-btn"
 					class:active={selectedMood === item.moodLevel}
-					onclick={() => selectedMood = item.moodLevel}
+					onclick={() => (selectedMood = item.moodLevel)}
 				>
 					<span class="emoji">{item.emoji}</span>
 					<span class="label">{item.label}</span>
@@ -386,13 +401,18 @@
 				id="mood-notes-modal"
 				rows="3"
 				placeholder="Tuliskan catatan perasaan atau tantangan hari ini..."
-				bind:value={moodNotes}
-			></textarea>
+				bind:value={moodNotes}></textarea>
 		</div>
 	</div>
 
 	{#snippet footer()}
-		<Button variant="ghost" onClick={() => { isMoodModalOpen = false; isCameraModalOpen = true; }}>
+		<Button
+			variant="ghost"
+			onClick={() => {
+				isMoodModalOpen = false;
+				isCameraModalOpen = true;
+			}}
+		>
 			Kembali ke Kamera
 		</Button>
 		<Button variant="success" onClick={submitAttendanceAndMood}>

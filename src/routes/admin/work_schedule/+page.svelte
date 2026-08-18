@@ -414,40 +414,6 @@
 		margin-top: 0.1rem;
 	}
 
-	/* ── Empty ── */
-	.empty {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 4rem 1rem;
-		background: var(--color-surface);
-		border: 2px dashed var(--color-border);
-		border-radius: var(--radius-lg, 16px);
-		text-align: center;
-		color: var(--color-text-light);
-	}
-	.empty-icon {
-		width: 72px;
-		height: 72px;
-		border-radius: 20px;
-		background: var(--color-background, #f8fafc);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-bottom: 0.25rem;
-	}
-	.empty p {
-		font-size: 1rem;
-		font-weight: 600;
-		color: var(--color-text);
-		margin: 0;
-	}
-	.empty span {
-		font-size: 0.85rem;
-		margin-bottom: 0.5rem;
-	}
-
 	/* ── Grid ── */
 	.grid {
 		display: grid;
@@ -609,37 +575,6 @@
 		grid-template-columns: 1fr 1fr;
 		gap: 1rem;
 	}
-	.field {
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-	}
-	.field label {
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: var(--color-text);
-	}
-	.field-input {
-		padding: 0.65rem 0.85rem;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md, 8px);
-		font-size: 0.9rem;
-		color: var(--color-text);
-		background: var(--color-surface);
-		outline: none;
-		width: 100%;
-		box-sizing: border-box;
-		transition: border-color 0.15s, box-shadow 0.15s;
-	}
-	.field-input:focus {
-		border-color: var(--color-primary, #2563eb);
-		box-shadow: 0 0 0 3px var(--color-primary-light, #dbeafe);
-	}
-	.field-hint {
-		font-size: 0.78rem;
-		color: var(--color-text-light);
-	}
-
 	/* ── Delete confirm ── */
 	.delete-body {
 		display: flex;

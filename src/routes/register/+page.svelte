@@ -36,10 +36,6 @@
             console.log('Registration successful:', result);
             showToast("Registrasi berhasil", "success");
         } catch (error) {
-            console.log("ERROR:", error);
-            console.log("INSTANCE:", error instanceof Error);
-            console.log("CONSTRUCTOR:", error?.constructor?.name);
-            console.error(error);
             const mesage = error instanceof Error ? error.message : "Pendaftaran gagal. Silakan coba lagi.";
             showToast(mesage,"danger")
         }

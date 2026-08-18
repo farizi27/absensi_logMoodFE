@@ -228,13 +228,6 @@
 		gap: 0.5rem;
 	}
 
-	.filter-item label {
-		font-size: 0.9rem;
-		font-weight: 600;
-		color: var(--color-text);
-		white-space: nowrap;
-	}
-
 	.select-wrap {
 		min-width: 180px;
 	}
